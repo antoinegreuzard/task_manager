@@ -56,8 +56,6 @@ class UserLoginForm(AuthenticationForm):
     password = forms.CharField(strip=False, widget=forms.PasswordInput(
         attrs={'autocomplete': 'current-password', 'class': 'form-control'}))
 
-    # remember_me = forms.BooleanField(required=False, widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}))
-
     class Meta:
         model = User
         fields = '__all__'
