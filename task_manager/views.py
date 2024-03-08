@@ -145,7 +145,7 @@ def update_task(request, task_list_id, task_id):
             return redirect('view_task_list', pk=task_list_id)
     else:
         form = TaskForm(instance=task)
-    return render(request, 'task_manager/update_task.html', {'form': form})
+    return render(request, 'task_manager/update_task.html', {'form': form, 'task': task})
 
 
 @login_required
