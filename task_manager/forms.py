@@ -20,7 +20,12 @@ class TaskForm(forms.ModelForm):
         input_formats=['%Y-%m-%dT%H:%M'],
     )
     title = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control'}))
-    description = forms.CharField(widget=forms.Textarea(attrs={'rows': 4, 'class': 'form-control'}))
+    description = forms.CharField(
+        widget=forms.Textarea(
+            attrs={'rows': 4, 'class': 'form-control'},
+        ),
+        required=False,
+    )
     priority = forms.ChoiceField(
         choices=[('High', 'High'), ('Medium', 'Medium'), ('Low', 'Low')],
         widget=forms.Select(attrs={'class': 'form-control'})

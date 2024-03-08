@@ -14,7 +14,7 @@ class TaskList(models.Model):
 
 class Task(models.Model):
     title = models.CharField(max_length=200)
-    description = models.TextField()
+    description = models.TextField(blank=True, null=True)
     deadline = models.DateTimeField(blank=True, null=True)
     priority = models.CharField(max_length=20)
     task_list = models.ForeignKey(TaskList, on_delete=models.CASCADE, related_name='tasks')
