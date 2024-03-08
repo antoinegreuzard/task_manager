@@ -1,4 +1,3 @@
-
 # Your Django Project Title
 
 A brief description of your Django project.
@@ -18,8 +17,8 @@ To set up your development environment, follow these steps:
 1. Clone the repository:
 
 ```bash
-git clone https://your-repository-url.git
-cd your-project-name
+git clone https://github.com/antoinegreuzard/task_manager.git
+cd task_manager
 ```
 
 2. Create a virtual environment (optional):
@@ -44,14 +43,6 @@ source venv/bin/activate
 
 ```bash
 pip install -r requirements.txt
-```
-
-### Configuration
-
-- Copy the `.env.example` file to `.env` and adjust the configurations according to your needs.
-
-```bash
-cp .env.example .env
 ```
 
 ### Running the Project
