@@ -35,9 +35,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'task_manager',
     'rest_framework',
-    'rest_framework.authtoken',
+    'task_manager',
 ]
 
 REST_FRAMEWORK = {
