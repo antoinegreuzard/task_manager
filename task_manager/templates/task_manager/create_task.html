@@ -1,0 +1,17 @@
+<!-- create_task.html -->
+{% extends 'base.html' %}
+
+{% block title %}
+Create Task - {{ task_list.title }} - {{ block.super }}
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <h2>Create Task</h2>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-primary">Create</button>
+  </form>
+</div>
+{% endblock %}

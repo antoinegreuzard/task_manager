@@ -1,0 +1,17 @@
+<!-- update_task.html -->
+{% extends 'base.html' %}
+
+{% block title %}
+Update Task - {{ task.title }} - {{ block.super }}
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <h2>Update Task</h2>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-primary">Update</button>
+  </form>
+</div>
+{% endblock %}
