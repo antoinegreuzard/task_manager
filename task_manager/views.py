@@ -156,3 +156,8 @@ def delete_task(request, task_list_id, task_id):
         task.delete()
         return redirect('view_task_list', pk=task_list_id)
     return render(request, 'task_manager/delete_task.html', {'task': task})
+
+
+def custom_404(request, exception):
+    """Redirect to home page on 404 errors."""
+    return redirect('home')
