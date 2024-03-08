@@ -125,9 +125,11 @@ def create_task(request, task_list_id):
     if request.method == 'POST':
         form = TaskForm(request.POST)
         if form.is_valid():
-            task = form.save(commit=False)
-            task.task_list = task_list
-            task.save()
+            new_task = form.save(commit=False)
+            new_task.task_list = task_list
+            new_task.save()
+            form.save_m2m()
+
             return redirect('view_task_list', pk=task_list_id)
     else:
         form = TaskForm()
