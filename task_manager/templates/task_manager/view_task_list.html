@@ -69,7 +69,7 @@
         <ul class="list-group">
           {% for task in tasks %}
             <li class="list-group-item {% if task.completed %}list-group-item-secondary{% endif %}">
-              <div class="d-flex justify-content-between">
+              <div class="d-flex justify-content-between flex-lg-row gap-2 flex-column">
                 <div>
                   <strong>Title:</strong> {{ task.title }}<br>
                   <strong>Description:</strong> {{ task.description }}<br>
