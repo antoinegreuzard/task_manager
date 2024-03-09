@@ -32,7 +32,7 @@ class TaskListAndTaskModelTest(CommonSetUp):
 
 class ViewTestCase(CommonSetUp):
     def setUp(self):
-        super().setUp()  # Appelle setUp de CommonSetUp pour réutiliser la configuration
+        super().setUp()
         self.client = Client()
         self.client.login(username='testuser', password='12345')
 

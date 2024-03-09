@@ -2,6 +2,7 @@ from django.contrib import messages
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
+from django.db.models import Count, Q
 from django.http import HttpResponseRedirect
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
@@ -31,7 +32,13 @@ class TaskListView(LoginRequiredMixin, ListView):
     template_name = 'task_manager/task_lists.html'
 
     def get_queryset(self):
-        return TaskList.objects.filter(created_by=self.request.user)
+        queryset = TaskList.objects.filter(created_by=self.request.user)
+        queryset = queryset.annotate(
+            total_tasks=Count('tasks'),
+            completed_tasks=Count('tasks', filter=Q(tasks__completed=True)),
+            not_completed_tasks=Count('tasks', filter=Q(tasks__completed=False)),
+        )
+        return queryset
 
 
 class UpdateTaskListView(LoginRequiredMixin, UpdateView):

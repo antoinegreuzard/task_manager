@@ -10,7 +10,12 @@
     <h2 class="mt-5">Task Lists</h2>
     <ul class="list-group mt-3">
       {% for task_list in task_lists %}
-        <li class="list-group-item"><a href="{% url 'view_task_list' task_list.id %}">{{ task_list.title }}</a></li>
+        <li class="list-group-item">
+          <a href="{% url 'view_task_list' task_list.id %}">{{ task_list.title }}</a>
+          - {{ task_list.total_tasks }} Tasks
+          ({{ task_list.completed_tasks }} Completed,
+          {{ task_list.not_completed_tasks }} Not Completed)
+        </li>
       {% endfor %}
     </ul>
     <a href="{% url 'create_task_list' %}" class="btn btn-primary mt-3">Create New Task List</a>
