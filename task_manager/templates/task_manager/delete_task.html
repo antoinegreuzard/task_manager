@@ -2,16 +2,16 @@
 {% extends 'base.html' %}
 
 {% block title %}
-Delete Task - {{ task.title }} - {{ block.super }}
+  Delete Task - {{ task.title }} - {{ block.super }}
 {% endblock %}
 
 {% block content %}
-<div class="container">
-  <h2>Delete Task</h2>
-  <p>Are you sure you want to delete "{{ task.title }}"?</p>
-  <form method="post">
-    {% csrf_token %}
-    <button type="submit" class="btn btn-danger">Delete</button>
-  </form>
-</div>
+  <div class="container">
+    <h2 class="mt-5">Delete Task</h2>
+    <p class="mt-3">Are you sure you want to delete "{{ task.title }}"?</p>
+    <form method="post" class="mt-3">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger">Delete</button>
+    </form>
+  </div>
 {% endblock %}

@@ -1,51 +1,51 @@
 {% extends 'base.html' %}
 
 {% block title %}
-{{ task_list.title }} - {{ block.super }}
+  {{ task_list.title }} - {{ block.super }}
 {% endblock %}
 
 {% block content %}
-<div class="container">
-  <div class="row">
-    <div class="col">
-      <h2>{{ task_list.title }}</h2>
-      <p>Created by: {{ task_list.created_by.username }}</p>
-      <p>Created at: {{ task_list.created_at }}</p>
+  <div class="container">
+    <div class="row">
+      <div class="col">
+        <h2>{{ task_list.title }}</h2>
+        <p>Created by: {{ task_list.created_by.username }}</p>
+        <p>Created at: {{ task_list.created_at }}</p>
+      </div>
+      <div class="col">
+        <div class="btn-group mt-3">
+          <a href="{% url 'update_task_list' task_list.id %}" class="btn btn-primary">Update List</a>
+          <a href="{% url 'delete_task_list' task_list.id %}" class="btn btn-danger">Delete List</a>
+        </div>
+      </div>
     </div>
-    <div class="col">
-      <div class="btn-group mt-3">
-        <a href="{% url 'update_task_list' task_list.id %}" class="btn btn-primary">Update List</a>
-        <a href="{% url 'delete_task_list' task_list.id %}" class="btn btn-danger">Delete List</a>
+    <!-- Display tasks related to this task list -->
+    <div class="row mt-4">
+      <div class="col">
+        <h3>Tasks</h3>
+        <ul class="list-group">
+          {% for task in task_list.tasks.all %}
+            <li class="list-group-item">
+              <strong>Title:</strong> {{ task.title }}<br>
+              <strong>Description:</strong> {{ task.description }}<br>
+              <strong>Deadline:</strong> {{ task.deadline|date:"d M Y H:i" }}<br>
+              <strong>Priority:</strong> {{ task.priority }}<br>
+              <strong>Assigned to:</strong>
+              {% for user in task.assigned_to.all %}
+                {{ user.username }}
+                {% if not forloop.last %}, {% endif %}
+                {% empty %}
+                Not assigned
+              {% endfor %}
+              <div class="float-right">
+                <a href="{% url 'update_task' task_list.id task.id %}" class="btn btn-sm btn-primary">Edit</a>
+                <a href="{% url 'delete_task' task_list.id task.id %}" class="btn btn-sm btn-danger">Delete</a>
+              </div>
+            </li>
+          {% endfor %}
+        </ul>
+        <a href="{% url 'create_task' task_list.id %}" class="btn btn-success mt-3">Add Task</a>
       </div>
     </div>
   </div>
-  <!-- Display tasks related to this task list -->
-  <div class="row mt-4">
-    <div class="col">
-      <h3>Tasks</h3>
-      <ul class="list-group">
-        {% for task in task_list.tasks.all %}
-        <li class="list-group-item">
-          <strong>Title:</strong> {{ task.title }}<br>
-          <strong>Description:</strong> {{ task.description }}<br>
-          <strong>Deadline:</strong> {{ task.deadline|date:"d M Y H:i" }}<br>
-          <strong>Priority:</strong> {{ task.priority }}<br>
-          <strong>Assigned to:</strong>
-          {% for user in task.assigned_to.all %}
-          {{ user.username }}
-          {% if not forloop.last %}, {% endif %}
-          {% empty %}
-          Not assigned
-          {% endfor %}
-          <div class="float-right">
-            <a href="{% url 'update_task' task_list.id task.id %}" class="btn btn-sm btn-primary">Edit</a>
-            <a href="{% url 'delete_task' task_list.id task.id %}" class="btn btn-sm btn-danger">Delete</a>
-          </div>
-        </li>
-        {% endfor %}
-      </ul>
-      <a href="{% url 'create_task' task_list.id %}" class="btn btn-success mt-3">Add Task</a>
-    </div>
-  </div>
-</div>
 {% endblock %}

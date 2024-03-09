@@ -2,17 +2,17 @@
 {% extends 'base.html' %}
 
 {% block title %}
-Task Lists - {{ block.super }}
+  Task Lists - {{ block.super }}
 {% endblock %}
 
 {% block content %}
-<div class="container">
-  <h2 class="mt-5">Task Lists</h2>
-  <ul class="list-group mt-3">
-    {% for task_list in task_lists %}
-    <li class="list-group-item"><a href="{% url 'view_task_list' task_list.id %}">{{ task_list.title }}</a></li>
-    {% endfor %}
-  </ul>
-  <a href="{% url 'create_task_list' %}" class="btn btn-primary mt-3">Create New Task List</a>
-</div>
+  <div class="container">
+    <h2 class="mt-5">Task Lists</h2>
+    <ul class="list-group mt-3">
+      {% for task_list in task_lists %}
+        <li class="list-group-item"><a href="{% url 'view_task_list' task_list.id %}">{{ task_list.title }}</a></li>
+      {% endfor %}
+    </ul>
+    <a href="{% url 'create_task_list' %}" class="btn btn-primary mt-3">Create New Task List</a>
+  </div>
 {% endblock %}
