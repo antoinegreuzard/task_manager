@@ -8,7 +8,7 @@ To set up your development environment, follow these steps:
 
 ### Prerequisites
 
-- Python 3.x
+- Python 3.10 minimum
 - pip
 - venv (optional but recommended)
 
