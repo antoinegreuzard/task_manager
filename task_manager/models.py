@@ -19,6 +19,7 @@ class Task(models.Model):
     priority = models.CharField(max_length=20)
     task_list = models.ForeignKey(TaskList, on_delete=models.CASCADE, related_name='tasks')
     assigned_to = models.ManyToManyField(User, related_name='assigned_tasks')
+    completed = models.BooleanField(default=False)
 
     def __str__(self):
         return self.title

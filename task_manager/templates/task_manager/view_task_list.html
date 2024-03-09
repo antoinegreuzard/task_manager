@@ -25,21 +25,31 @@
         <h3>Tasks</h3>
         <ul class="list-group">
           {% for task in task_list.tasks.all %}
-            <li class="list-group-item">
-              <strong>Title:</strong> {{ task.title }}<br>
-              <strong>Description:</strong> {{ task.description }}<br>
-              <strong>Deadline:</strong> {{ task.deadline|date:"d M Y H:i" }}<br>
-              <strong>Priority:</strong> {{ task.priority }}<br>
-              <strong>Assigned to:</strong>
-              {% for user in task.assigned_to.all %}
-                {{ user.username }}
-                {% if not forloop.last %}, {% endif %}
-                {% empty %}
-                Not assigned
-              {% endfor %}
-              <div class="float-right">
-                <a href="{% url 'update_task' task_list.id task.id %}" class="btn btn-sm btn-primary">Edit</a>
-                <a href="{% url 'delete_task' task_list.id task.id %}" class="btn btn-sm btn-danger">Delete</a>
+            <li class="list-group-item {% if task.completed %}list-group-item-secondary{% endif %}">
+              <div class="d-flex justify-content-between">
+                <div>
+                  <strong>Title:</strong> {{ task.title }}<br>
+                  <strong>Description:</strong> {{ task.description }}<br>
+                  <strong>Deadline:</strong> {{ task.deadline|date:"d M Y H:i" }}<br>
+                  <strong>Priority:</strong> {{ task.priority }}<br>
+                  <strong>Assigned to:</strong>
+                  {% for user in task.assigned_to.all %}
+                    {{ user.username }}
+                    {% if not forloop.last %}, {% endif %}
+                    {% empty %}
+                    Not assigned
+                  {% endfor %}
+                </div>
+                <div>
+                  <a href="{% url 'update_task' task_list.id task.id %}" class="btn btn-sm btn-primary">Edit</a>
+                  <a href="{% url 'delete_task' task_list.id task.id %}" class="btn btn-sm btn-danger">Delete</a>
+                  {% if not task.completed %}
+                    <a href="{% url 'mark_task_completed' task.id %}" class="btn btn-sm btn-warning mark-complete">Mark
+                      as Complete</a>
+                  {% else %}
+                    <span class="btn btn-sm btn-success">Completed</span>
+                  {% endif %}
+                </div>
               </div>
             </li>
           {% endfor %}
