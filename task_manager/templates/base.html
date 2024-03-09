@@ -13,25 +13,29 @@
   <nav class="navbar navbar-expand-lg navbar-light bg-light">
     <div class="container">
       <a class="navbar-brand" href="{% url 'home' %}">Task Manager</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+              aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav ml-auto">
           {% if user.is_authenticated %}
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'logout' %}">Logout</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'task_lists' %}">Task Lists</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'create_task_list' %}">Create Task List</a>
-          </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'logout' %}">Logout</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'task_lists' %}">Task Lists</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'create_task_list' %}">Create Task List</a>
+            </li>
           {% else %}
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'login' %}">Login</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'register' %}">Register</a>
-          </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'login' %}">Login</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'register' %}">Register</a>
+            </li>
           {% endif %}
         </ul>
       </div>
@@ -40,11 +44,11 @@
 </header>
 <main class="container mt-4">
   {% if messages %}
-  {% for message in messages %}
-  <div class="alert alert-{{ message.tags }} mt-3" role="alert">
-    {{ message }}
-  </div>
-  {% endfor %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} mt-3" role="alert">
+        {{ message }}
+      </div>
+    {% endfor %}
   {% endif %}
   {% block content %}
   {% endblock %}
