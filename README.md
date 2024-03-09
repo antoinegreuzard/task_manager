@@ -45,6 +45,14 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
+### Configuration
+
+- Copy the `.env.example` file to `.env` and adjust the configurations according to your needs.
+
+```bash
+cp .env.example .env
+```
+
 ### Running the Project
 
 1. Perform migrations:
