@@ -1,6 +1,8 @@
 from django.contrib import messages
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.models import User
+from django.http import HttpResponseRedirect
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse_lazy
@@ -9,12 +11,6 @@ from django.views.generic import ListView, CreateView, UpdateView, DeleteView, D
 
 from task_manager.models import TaskList, Task
 from task_manager.forms import TaskListForm, TaskForm, UserRegistrationForm, UserLoginForm
-
-
-@login_required
-def task_lists(request):
-    task_lists = TaskList.objects.filter(created_by=request.user)
-    return render(request, 'task_manager/task_lists.html', {'task_lists': task_lists})
 
 
 class CreateTaskListView(LoginRequiredMixin, CreateView):
@@ -115,8 +111,27 @@ class TaskListDetailView(LoginRequiredMixin, DetailView):
     context_object_name = 'task_list'
     template_name = 'task_manager/view_task_list.html'
 
-    def get_queryset(self):
-        return TaskList.objects.filter(created_by=self.request.user)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        tasks = self.object.tasks.all()
+
+        user_id = self.request.GET.get('user_id')
+        date = self.request.GET.get('date')
+        sort_order = self.request.GET.get('sort', 'deadline')
+        completed = self.request.GET.get('completed')
+
+        if user_id:
+            tasks = tasks.filter(assigned_to__id=user_id)
+        if date:
+            tasks = tasks.filter(deadline__date=date)
+        if completed in ['True', 'False']:
+            tasks = tasks.filter(completed=(completed == 'True'))
+        if sort_order:
+            tasks = tasks.order_by(sort_order)
+
+        context['tasks'] = tasks
+        context['users'] = User.objects.all()
+        return context
 
 
 @login_required
@@ -158,6 +173,16 @@ def delete_task(request, task_list_id, task_id):
         task.delete()
         return redirect('view_task_list', pk=task_list_id)
     return render(request, 'task_manager/delete_task.html', {'task': task})
+
+
+@login_required
+def mark_task_completed(request, task_list_id, task_id):
+    task_list = get_object_or_404(TaskList, pk=task_list_id, created_by=request.user)
+    task = get_object_or_404(Task, pk=task_id, task_list=task_list)
+    if request.method == 'POST':
+        task.completed = not task.completed
+        task.save()
+    return redirect('view_task_list', pk=task_list_id)
 
 
 def custom_404(request, exception):

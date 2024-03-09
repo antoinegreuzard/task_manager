@@ -19,12 +19,55 @@
         </div>
       </div>
     </div>
+    <!-- Filter form -->
+    <div class="row my-4">
+      <div class="col">
+        <form method="get" action="{% url 'view_task_list' task_list.id %}" class="form-row align-items-center">
+          <div class="col-md-auto my-1">
+            <select id="user_id" name="user_id" class="form-control">
+              <option value="">User assigned to</option>
+              {% for user in users %}
+                <option value="{{ user.id }}"
+                        {% if request.GET.user_id == user.id|stringformat:"s" %}selected{% endif %}>
+                  {{ user.username }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-auto my-1">
+            <input id="date" type="date" name="date" class="form-control" value="{{ request.GET.date }}">
+          </div>
+          <div class="col-md-auto my-1">
+            <select id="sort" name="sort" class="form-control">
+              <option value="">Sort by date</option>
+              <option value="deadline" {% if request.GET.sort == "deadline" %}selected{% endif %}>Ascending date
+              </option>
+              <option value="-deadline" {% if request.GET.sort == "-deadline" %}selected{% endif %}>Descending date
+              </option>
+            </select>
+          </div>
+          <div class="col-md-auto my-1">
+            <select id="completed" name="completed" class="form-control">
+              <option value="">All Tasks</option>
+              <option value="True" {% if request.GET.completed == "True" %}selected{% endif %}>Completed Tasks</option>
+              <option value="False" {% if request.GET.completed == "False" %}selected{% endif %}>Incomplete Tasks
+              </option>
+            </select>
+          </div>
+          <div class="col-md-auto my-1 d-flex gap-2">
+            <button type="submit" class="btn btn-primary">Apply</button>
+            <button type="reset" class="btn btn-secondary">Reset</button>
+            <a href="{% url 'view_task_list' task_list.id %}" class="btn btn-info">Clear</a>
+          </div>
+        </form>
+      </div>
+    </div>
     <!-- Display tasks related to this task list -->
     <div class="row mt-4">
       <div class="col">
         <h3>Tasks</h3>
         <ul class="list-group">
-          {% for task in task_list.tasks.all %}
+          {% for task in tasks %}
             <li class="list-group-item {% if task.completed %}list-group-item-secondary{% endif %}">
               <div class="d-flex justify-content-between">
                 <div>
@@ -43,12 +86,14 @@
                 <div>
                   <a href="{% url 'update_task' task_list.id task.id %}" class="btn btn-sm btn-primary">Edit</a>
                   <a href="{% url 'delete_task' task_list.id task.id %}" class="btn btn-sm btn-danger">Delete</a>
-                  {% if not task.completed %}
-                    <a href="{% url 'mark_task_completed' task.id %}" class="btn btn-sm btn-warning mark-complete">Mark
-                      as Complete</a>
-                  {% else %}
-                    <span class="btn btn-sm btn-success">Completed</span>
-                  {% endif %}
+                  <form action="{% url 'mark_task_completed' task_list_id=task.task_list.id task_id=task.id %}"
+                        method="post" style="display: inline-block;">
+                    {% csrf_token %}
+                    <button type="submit"
+                            class="btn btn-sm {% if not task.completed %}btn-warning{% else %}btn-success{% endif %}">
+                      {% if not task.completed %}Mark as Complete{% else %}Completed{% endif %}
+                    </button>
+                  </form>
                 </div>
               </div>
             </li>
