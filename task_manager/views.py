@@ -5,12 +5,12 @@ from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
-from django.core.serializers import serialize
 from django.db.models import Count, Q
+from django.http import HttpResponseRedirect
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy
 from django.views import View
-from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView
+from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView, FormView
 
 from task_manager.forms import TaskListForm, TaskForm, UserRegistrationForm, UserLoginForm
 from task_manager.models import TaskList, Task
@@ -122,29 +122,35 @@ class RegisterView(View):
         return render(request, 'registration/register.html', {'form': form})
 
 
-def user_login(request):
-    if request.method == 'POST':
-        form = UserLoginForm(data=request.POST)
-        if form.is_valid():
-            username = form.cleaned_data['username']
-            password = form.cleaned_data['password']
-            user = authenticate(username=username, password=password)
-            if user is not None:
-                login(request, user)
+class LoginView(FormView):
+    form_class = UserLoginForm
+    template_name = 'registration/login.html'
+    success_url = reverse_lazy('home')
 
-                if form.cleaned_data.get('remember_me'):
-                    request.session.set_expiry(1209600)
-                else:
-                    request.session.set_expiry(0)
+    def form_valid(self, form):
+        user = form.get_user()
+        login(self.request, user)
 
-                return redirect('home')
-            else:
-                messages.error(request, 'Username or password is not correct')
+        if form.cleaned_data.get('remember_me'):
+            self.request.session.set_expiry(1209600)
         else:
-            messages.error(request, 'Error validating the form')
-    else:
-        form = UserLoginForm()
-    return render(request, 'registration/login.html', {'form': form})
+            self.request.session.set_expiry(0)
+
+        next_url = self.request.GET.get('next', '')
+        if next_url:
+            return HttpResponseRedirect(next_url)
+        else:
+            return super().form_valid(form)
+
+    def form_invalid(self, form):
+        messages.error(self.request, 'Username or password is not correct')
+        return super().form_invalid(form)
+
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        return super().post(request, *args, **kwargs)
 
 
 def user_logout(request):
