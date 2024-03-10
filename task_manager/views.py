@@ -250,7 +250,6 @@ def delete_task(request, task_list_id, task_id):
 @login_required
 def mark_task_completed(request, task_list_id, task_id):
     task_list = get_object_or_404(TaskList, pk=task_list_id)
-    # Vérifiez si l'utilisateur a le droit de marquer la tâche comme complétée
     if not (request.user == task_list.created_by or request.user in task_list.shared_with.all()):
         return HttpResponseForbidden("You do not have permission to complete this task.")
 
