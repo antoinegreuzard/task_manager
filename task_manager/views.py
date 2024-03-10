@@ -5,6 +5,7 @@ from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
+from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Count, Q
 from django.http import HttpResponseRedirect
 from django.shortcuts import render, redirect, get_object_or_404
@@ -12,7 +13,7 @@ from django.urls import reverse_lazy
 from django.views import View
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView, FormView
 
-from task_manager.forms import TaskListForm, TaskForm, UserRegistrationForm, UserLoginForm
+from task_manager.forms import TaskListForm, TaskForm, UserRegistrationForm, UserLoginForm, ShareTaskListForm
 from task_manager.models import TaskList, Task
 
 
@@ -34,7 +35,8 @@ class TaskListView(LoginRequiredMixin, ListView):
     template_name = 'task_manager/task_lists.html'
 
     def get_queryset(self):
-        queryset = TaskList.objects.filter(created_by=self.request.user)
+        user = self.request.user
+        queryset = TaskList.objects.filter(Q(created_by=user) | Q(shared_with=user)).distinct()
         queryset = queryset.annotate(
             total_tasks=Count('tasks'),
             completed_tasks=Count('tasks', filter=Q(tasks__completed=True)),
@@ -243,6 +245,24 @@ def mark_task_completed(request, task_list_id, task_id):
         task.completed = not task.completed
         task.save()
     return redirect('view_task_list', pk=task_list_id)
+
+
+@login_required
+def share_task_list(request, task_list_id):
+    task_list = get_object_or_404(TaskList, pk=task_list_id, created_by=request.user)
+    if request.method == 'POST':
+        form = ShareTaskListForm(request.POST)
+        if form.is_valid():
+            email = form.cleaned_data['email']
+            try:
+                user_to_share_with = User.objects.get(email=email)
+                task_list.shared_with.add(user_to_share_with)
+                messages.success(request, 'List shared successfully.')
+            except ObjectDoesNotExist:
+                messages.error(request, 'User does not exist.')
+    else:
+        form = ShareTaskListForm()
+    return render(request, 'task_manager/share_task_list.html', {'form': form})
 
 
 def custom_404(request, exception):
