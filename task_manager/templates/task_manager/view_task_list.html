@@ -14,9 +14,11 @@
       </div>
       <div class="col-12 col-lg text-lg-end">
         <div class="btn-group mt-3">
-          <a href="{% url 'update_task_list' task_list.id %}" class="btn btn-primary">Update List</a>
-          <a href="{% url 'delete_task_list' task_list.id %}" class="btn btn-danger">Delete List</a>
-          <a href="{% url 'share_task_list' task_list.id %}" class="btn btn-info">Share List</a>
+          {% if request.user == task_list.created_by %}
+            <a href="{% url 'update_task_list' task_list.id %}" class="btn btn-primary">Update List</a>
+            <a href="{% url 'delete_task_list' task_list.id %}" class="btn btn-danger">Delete List</a>
+            <a href="{% url 'share_task_list' task_list.id %}" class="btn btn-info">Share List</a>
+          {% endif %}
         </div>
       </div>
     </div>
@@ -115,10 +117,12 @@
                   {% endfor %}
                 </div>
                 <div class="mt-3 d-flex flex-column flex-sm-row justify-content-sm-end">
-                  <a href="{% url 'update_task' task_list.id task.id %}"
-                     class="btn btn-sm btn-primary mb-2 mb-sm-0 mr-sm-2">Edit</a>
-                  <a href="{% url 'delete_task' task_list.id task.id %}"
-                     class="btn btn-sm btn-danger mb-2 mb-sm-0 mr-sm-2">Delete</a>
+                  {% if request.user == task_list.created_by or request.user in task.assigned_to.all or request.user in task_list.shared_with.all %}
+                    <a href="{% url 'update_task' task_list.id task.id %}"
+                       class="btn btn-sm btn-primary mb-2 mb-sm-0 mr-sm-2">Edit</a>
+                    <a href="{% url 'delete_task' task_list.id task.id %}"
+                       class="btn btn-sm btn-danger mb-2 mb-sm-0 mr-sm-2">Delete</a>
+                  {% endif %}
                   <form action="{% url 'mark_task_completed' task_list_id=task.task_list.id task_id=task.id %}"
                         method="post" style="display: inline-block;">
                     {% csrf_token %}
