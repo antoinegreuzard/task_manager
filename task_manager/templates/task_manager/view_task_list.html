@@ -12,10 +12,11 @@
         <p>Created by: {{ task_list.created_by.username }}</p>
         <p>Created at: {{ task_list.created_at }}</p>
       </div>
-      <div class="col text-end">
+      <div class="col-12 col-lg text-lg-end">
         <div class="btn-group mt-3">
           <a href="{% url 'update_task_list' task_list.id %}" class="btn btn-primary">Update List</a>
           <a href="{% url 'delete_task_list' task_list.id %}" class="btn btn-danger">Delete List</a>
+          <a href="{% url 'share_task_list' task_list.id %}" class="btn btn-info">Share List</a>
         </div>
       </div>
     </div>

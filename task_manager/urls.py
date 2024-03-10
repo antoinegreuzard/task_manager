@@ -17,4 +17,5 @@ urlpatterns = [
     path('task_list/<int:task_list_id>/delete_task/<int:task_id>/', views.delete_task, name='delete_task'),
     path('task_list/<int:task_list_id>/completed/<int:task_id>/', views.mark_task_completed,
          name='mark_task_completed'),
+    path('task_list/<int:task_list_id>/share/', views.share_task_list, name='share_task_list'),
 ]
