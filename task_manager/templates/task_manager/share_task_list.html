@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block title %}Share Task List{% endblock %}
+
+{% block content %}
+  <div class="container">
+    <h2 class="mt-5">Share Task List</h2>
+    <form method="post">
+      {% csrf_token %}
+      <div class="mb-3">
+        <label for="email" class="form-label">User Email</label>
+        {{ form.email }}
+      </div>
+      <button type="submit" class="btn btn-primary">Share</button>
+    </form>
+  </div>
+{% endblock %}

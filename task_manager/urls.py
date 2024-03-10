@@ -8,6 +8,7 @@ urlpatterns = [
     path('task_list/<int:pk>/', views.TaskListDetailView.as_view(), name='view_task_list'),
     path('task_list/<int:pk>/update/', views.UpdateTaskListView.as_view(), name='update_task_list'),
     path('task_list/<int:pk>/delete/', views.DeleteTaskListView.as_view(), name='delete_task_list'),
+    path('task_list/<int:task_list_id>/share/', views.share_task_list, name='share_task_list'),
     path('', views.home, name='home'),
     path('accounts/register/', views.RegisterView.as_view(), name='register'),
     path('accounts/login/', views.LoginView.as_view(), name='login'),
