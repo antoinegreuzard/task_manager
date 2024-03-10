@@ -1,13 +1,28 @@
-<!-- home.html -->
 {% extends 'base.html' %}
-
-{% block title %}
-  Home - {{ block.super }}
-{% endblock %}
 
 {% block content %}
   <div class="container">
     <h2 class="mt-5">Welcome to Task Manager</h2>
     <p class="mt-3">This is the home page of Task Manager application.</p>
+
+    {% if user.is_authenticated %}
+      <div id='calendar'></div>
+    {% else %}
+      <p>Please <a href="{% url 'login' %}">login</a> to view your tasks calendar.</p>
+    {% endif %}
   </div>
+{% endblock %}
+
+{% block script %}
+  <script src='https://cdn.jsdelivr.net/npm/fullcalendar/index.global.min.js'></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const calendarEl = document.getElementById('calendar');
+      const calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        events: {{ tasks_json|safe }}
+      });
+      calendar.render();
+    });
+  </script>
 {% endblock %}

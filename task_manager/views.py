@@ -1,8 +1,11 @@
+import json
+
 from django.contrib import messages
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
+from django.core.serializers import serialize
 from django.db.models import Count, Q
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy
@@ -60,7 +63,34 @@ class DeleteTaskListView(LoginRequiredMixin, DeleteView):
 
 
 def home(request):
-    return render(request, 'home.html')
+    context = {}
+    if request.user.is_authenticated:
+        user_tasks = Task.objects.filter(
+            assigned_to=request.user,
+            completed=False,
+            deadline__isnull=False
+        ).select_related('task_list').order_by('deadline')
+
+        tasks_data = []
+        for task in user_tasks:
+            priority_colors = {
+                'High': '#ff0000',
+                'Medium': '#ffa500',
+                'Low': '#008000',
+            }
+            color = priority_colors.get(task.priority, '#007bff')
+
+            assigned_to_name = task.assigned_to.first().username if task.assigned_to.exists() else 'N/A'
+
+            task_data = {
+                'title': f"{task.title} ({task.task_list.title} - {assigned_to_name})",
+                'start': task.deadline.strftime("%Y-%m-%dT%H:%M:%S"),
+                'color': color,
+            }
+            tasks_data.append(task_data)
+
+        context['tasks_json'] = json.dumps(tasks_data)
+    return render(request, 'home.html', context)
 
 
 class RegisterView(View):
