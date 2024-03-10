@@ -7,7 +7,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Count, Q
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponseForbidden
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy
 from django.views import View
@@ -52,7 +52,8 @@ class UpdateTaskListView(LoginRequiredMixin, UpdateView):
     success_url = reverse_lazy('task_lists')
 
     def get_queryset(self):
-        return TaskList.objects.filter(created_by=self.request.user)
+        user = self.request.user
+        return TaskList.objects.filter(Q(created_by=user) | Q(shared_with=user)).distinct()
 
 
 class DeleteTaskListView(LoginRequiredMixin, DeleteView):
@@ -198,7 +199,11 @@ class TaskListDetailView(LoginRequiredMixin, DetailView):
 
 @login_required
 def create_task(request, task_list_id):
-    task_list = get_object_or_404(TaskList, pk=task_list_id, created_by=request.user)
+    try:
+        task_list = TaskList.objects.get(Q(pk=task_list_id), Q(created_by=request.user) | Q(shared_with=request.user))
+    except TaskList.DoesNotExist:
+        return HttpResponseForbidden("You do not have permission to access this task list.")
+
     if request.method == 'POST':
         form = TaskForm(request.POST)
         if form.is_valid():
@@ -206,7 +211,6 @@ def create_task(request, task_list_id):
             new_task.task_list = task_list
             new_task.save()
             form.save_m2m()
-
             return redirect('view_task_list', pk=task_list_id)
     else:
         form = TaskForm()
@@ -215,7 +219,10 @@ def create_task(request, task_list_id):
 
 @login_required
 def update_task(request, task_list_id, task_id):
-    task_list = get_object_or_404(TaskList, pk=task_list_id, created_by=request.user)
+    task_list = get_object_or_404(TaskList, pk=task_list_id)
+    if not (request.user == task_list.created_by or request.user in task_list.shared_with.all()):
+        return HttpResponseForbidden("You do not have permission to update this task.")
+
     task = get_object_or_404(Task, pk=task_id, task_list=task_list)
     if request.method == 'POST':
         form = TaskForm(request.POST, instance=task)
@@ -229,7 +236,10 @@ def update_task(request, task_list_id, task_id):
 
 @login_required
 def delete_task(request, task_list_id, task_id):
-    task_list = get_object_or_404(TaskList, pk=task_list_id, created_by=request.user)
+    task_list = get_object_or_404(TaskList, pk=task_list_id)
+    if not (request.user == task_list.created_by or request.user in task_list.shared_with.all()):
+        return HttpResponseForbidden("You do not have permission to delete this task.")
+
     task = get_object_or_404(Task, pk=task_id, task_list=task_list)
     if request.method == 'POST':
         task.delete()
@@ -239,7 +249,11 @@ def delete_task(request, task_list_id, task_id):
 
 @login_required
 def mark_task_completed(request, task_list_id, task_id):
-    task_list = get_object_or_404(TaskList, pk=task_list_id, created_by=request.user)
+    task_list = get_object_or_404(TaskList, pk=task_list_id)
+    # Vérifiez si l'utilisateur a le droit de marquer la tâche comme complétée
+    if not (request.user == task_list.created_by or request.user in task_list.shared_with.all()):
+        return HttpResponseForbidden("You do not have permission to complete this task.")
+
     task = get_object_or_404(Task, pk=task_id, task_list=task_list)
     if request.method == 'POST':
         task.completed = not task.completed
