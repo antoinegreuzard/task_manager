@@ -69,7 +69,7 @@ def home(request):
             assigned_to=request.user,
             completed=False,
             deadline__isnull=False
-        ).select_related('task_list').order_by('deadline')
+        ).select_related('task_list').prefetch_related('assigned_to').order_by('deadline')
 
         tasks_data = []
         for task in user_tasks:
@@ -81,11 +81,21 @@ def home(request):
             color = priority_colors.get(task.priority, '#007bff')
 
             assigned_to_name = task.assigned_to.first().username if task.assigned_to.exists() else 'N/A'
+            assigned_to_names = ', '.join(user.username for user in task.assigned_to.all())
 
             task_data = {
+                'id': task.id,
                 'title': f"{task.title} ({task.task_list.title} - {assigned_to_name})",
                 'start': task.deadline.strftime("%Y-%m-%dT%H:%M:%S"),
                 'color': color,
+                'extendedProps': {
+                    'title': task.title,
+                    'description': task.description,
+                    'priority': task.priority,
+                    'assignedTo': assigned_to_names,
+                    'completed': task.completed,
+                    'taskListTitle': task.task_list.title,
+                }
             }
             tasks_data.append(task_data)
 

@@ -1,5 +1,15 @@
 {% extends 'base.html' %}
 
+{% block css %}
+  {{ block.super }}
+  <style>
+    .fc-event {
+      cursor: pointer;
+    }
+  </style>
+{% endblock %}
+
+
 {% block content %}
   <div class="container">
     <h2 class="mt-5">Welcome to Task Manager</h2>
@@ -10,6 +20,21 @@
     {% else %}
       <p>Please <a href="{% url 'login' %}">login</a> to view your tasks calendar.</p>
     {% endif %}
+  </div>
+
+  <div class="modal fade" id="taskDetailsModal" tabindex="-1" aria-labelledby="taskDetailsModalLabel"
+       aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="taskDetailsModalLabel">Task Details</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <!-- Les détails de la tâche seront injectés ici -->
+        </div>
+      </div>
+    </div>
   </div>
 {% endblock %}
 
@@ -32,6 +57,29 @@
             left: 'prev,next today',
             center: 'title',
             right: 'dayGridMonth,timeGridWeek,timeGridDay'
+          },
+          eventClick: function (info) {
+            const {event} = info;
+            const eventData = {
+              title: event.extendedProps.title,
+              description: event.extendedProps.description || 'No description available.',
+              deadline: event.start ? event.start.toLocaleString() : 'No deadline',
+              priority: event.extendedProps.priority || 'No priority',
+              assignedTo: event.extendedProps.assignedTo || 'No one assigned',
+            };
+
+            // Injection des données dans la modal
+            document.getElementById('taskDetailsModalLabel').textContent = eventData.title;
+            document.querySelector('#taskDetailsModal .modal-body').innerHTML = `
+              <p><strong>Description:</strong> ${eventData.description}</p>
+              <p><strong>Deadline:</strong> ${eventData.deadline}</p>
+              <p><strong>Priority:</strong> ${eventData.priority}</p>
+              <p><strong>Assigned to:</strong> ${eventData.assignedTo}</p>
+            `;
+
+            // Affichage de la modal
+            const taskDetailsModal = new bootstrap.Modal(document.getElementById('taskDetailsModal'));
+            taskDetailsModal.show();
           }
         });
         calendar.render();
