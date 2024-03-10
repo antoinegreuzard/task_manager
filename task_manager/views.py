@@ -154,15 +154,20 @@ class TaskListDetailView(LoginRequiredMixin, DetailView):
         user_id = self.request.GET.get('user_id')
         date = self.request.GET.get('date')
         sort_order = self.request.GET.get('sort', 'deadline')
-        completed = self.request.GET.get('completed')
+        completed = self.request.GET.get('completed', 'False')
         priority = self.request.GET.get('priority')
 
         if user_id:
             tasks = tasks.filter(assigned_to__id=user_id)
         if date:
             tasks = tasks.filter(deadline__date=date)
-        if completed in ['True', 'False']:
-            tasks = tasks.filter(completed=(completed == 'True'))
+        if completed == 'True':
+            tasks = tasks.filter(completed=True)
+        elif completed == 'False':
+            tasks = tasks.filter(completed=False)
+        else:
+            tasks = self.object.tasks.all()
+
         if sort_order:
             tasks = tasks.order_by(sort_order)
         if priority:
