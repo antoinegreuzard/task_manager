@@ -12,68 +12,88 @@
         <p>Created by: {{ task_list.created_by.username }}</p>
         <p>Created at: {{ task_list.created_at }}</p>
       </div>
-      <div class="col">
+      <div class="col text-right">
         <div class="btn-group mt-3">
           <a href="{% url 'update_task_list' task_list.id %}" class="btn btn-primary">Update List</a>
           <a href="{% url 'delete_task_list' task_list.id %}" class="btn btn-danger">Delete List</a>
         </div>
       </div>
     </div>
-    <!-- Filter form -->
-    <div class="row">
+
+    <!-- Filter and sort form -->
+    <div class="row my-3">
       <div class="col">
-        <form method="get" action="{% url 'view_task_list' task_list.id %}" class="form-inline">
-          <!-- Filtre utilisateur assigné -->
-          <select id="user_id" name="user_id" class="form-control mr-2">
-            <option value="">User assigned to</option>
-            {% for user in users %}
-              <option value="{{ user.id }}" {% if request.GET.user_id == user.id|stringformat:"s" %}selected{% endif %}>
-                {{ user.username }}
-              </option>
-            {% endfor %}
-          </select>
+        <form method="get" action="{% url 'view_task_list' task_list.id %}" class="form-inline justify-content-between">
+          <div class="form-row align-items-center">
+            <!-- User filter -->
+            <div class="col-auto">
+              <select id="user_id" name="user_id" class="form-control mb-2">
+                <option value="">User assigned to</option>
+                {% for user in users %}
+                  <option value="{{ user.id }}"
+                          {% if request.GET.user_id == user.id|stringformat:"s" %}selected{% endif %}>
+                    {{ user.username }}
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
 
-          <!-- Filtre date -->
-          <input id="date" type="date" name="date" class="form-control mr-2" value="{{ request.GET.date }}">
+            <!-- Date filter -->
+            <div class="col-auto">
+              <input id="date" type="date" name="date" class="form-control mb-2" value="{{ request.GET.date }}">
+            </div>
 
-          <!-- Filtre de tri -->
-          <select id="sort" name="sort" class="form-control mr-2">
-            <option value="">Sort by date</option>
-            <option value="deadline" {% if request.GET.sort == "deadline" %}selected{% endif %}>Ascending date</option>
-            <option value="-deadline" {% if request.GET.sort == "-deadline" %}selected{% endif %}>Descending date
-            </option>
-          </select>
+            <!-- Sort filter -->
+            <div class="col-auto">
+              <select id="sort" name="sort" class="form-control mb-2">
+                <option value="">Sort by date</option>
+                <option value="deadline" {% if request.GET.sort == "deadline" %}selected{% endif %}>Ascending date
+                </option>
+                <option value="-deadline" {% if request.GET.sort == "-deadline" %}selected{% endif %}>Descending date
+                </option>
+              </select>
+            </div>
 
-          <!-- Filtre tâches complétées -->
-          <select id="completed" name="completed" class="form-control mr-2">
-            <option value="">All Tasks</option>
-            <option value="True" {% if request.GET.completed == "True" %}selected{% endif %}>Completed Tasks</option>
-            <option value="False" {% if request.GET.completed == "False" %}selected{% endif %}>Incomplete Tasks</option>
-          </select>
+            <!-- Completion filter -->
+            <div class="col-auto">
+              <select id="completed" name="completed" class="form-control mb-2">
+                <option value="">All Tasks</option>
+                <option value="True" {% if request.GET.completed == "True" %}selected{% endif %}>Completed Tasks
+                </option>
+                <option value="False" {% if request.GET.completed == "False" %}selected{% endif %}>Incomplete Tasks
+                </option>
+              </select>
+            </div>
 
-          <!-- Correction de la faute de frappe ici -->
-          <select id="priority" name="priority" class="form-control mr-2">
-            <option value="">All priorities</option>
-            <option value="High" {% if request.GET.priority == "High" %}selected{% endif %}>High</option>
-            <option value="Medium" {% if request.GET.priority == "Medium" %}selected{% endif %}>Medium</option>
-            <option value="Low" {% if request.GET.priority == "Low" %}selected{% endif %}>Low</option>
-          </select>
+            <!-- Priority filter -->
+            <div class="col-auto">
+              <select id="priority" name="priority" class="form-control mb-2">
+                <option value="">All priorities</option>
+                <option value="High" {% if request.GET.priority == "High" %}selected{% endif %}>High</option>
+                <option value="Medium" {% if request.GET.priority == "Medium" %}selected{% endif %}>Medium</option>
+                <option value="Low" {% if request.GET.priority == "Low" %}selected{% endif %}>Low</option>
+              </select>
+            </div>
 
-          <!-- Boutons de soumission et de réinitialisation -->
-          <button type="submit" class="btn btn-primary mr-1">Apply</button>
-          <button type="reset" class="btn btn-secondary mr-1">Reset</button>
-          <a href="{% url 'view_task_list' task_list.id %}" class="btn btn-info">Clear</a>
+            <!-- Submission buttons -->
+            <div class="col-auto">
+              <button type="submit" class="btn btn-primary mb-2 mr-1">Apply</button>
+              <button type="reset" class="btn btn-secondary mb-2 mr-1">Reset</button>
+              <a href="{% url 'view_task_list' task_list.id %}" class="btn btn-info mb-2">Clear</a>
+            </div>
+          </div>
         </form>
       </div>
     </div>
-    <!-- Display tasks related to this task list -->
-    <div class="row mt-4">
+
+    <!-- Tasks display -->
+    <div class="row">
       <div class="col">
         <h3>Tasks</h3>
         <ul class="list-group">
           {% for task in tasks %}
             <li class="list-group-item {% if task.completed %}list-group-item-secondary{% endif %}">
-              <div class="d-flex justify-content-between flex-lg-row gap-2 flex-column">
+              <div class="d-flex justify-content-between align-items-center">
                 <div>
                   <strong>Title:</strong> {{ task.title }}<br>
                   <strong>Description:</strong> {{ task.description }}<br>
@@ -87,7 +107,7 @@
                     Not assigned
                   {% endfor %}
                 </div>
-                <div>
+                <div class="btn-group">
                   <a href="{% url 'update_task' task_list.id task.id %}" class="btn btn-sm btn-primary">Edit</a>
                   <a href="{% url 'delete_task' task_list.id task.id %}" class="btn btn-sm btn-danger">Delete</a>
                   <form action="{% url 'mark_task_completed' task_list_id=task.task_list.id task_id=task.id %}"
