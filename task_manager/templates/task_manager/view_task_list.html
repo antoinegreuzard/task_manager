@@ -40,7 +40,8 @@
 
             <!-- Date filter -->
             <div class="col-auto">
-              <input id="date" type="date" name="date" class="form-control mb-2" value="{{ request.GET.date }}">
+              <input id="date" type="date" name="date" class="form-control mb-2" value="{{ request.GET.date }}"
+                     placeholder="Filter by date">
             </div>
 
             <!-- Sort filter -->
@@ -112,14 +113,16 @@
                     Not assigned
                   {% endfor %}
                 </div>
-                <div class="btn-group">
-                  <a href="{% url 'update_task' task_list.id task.id %}" class="btn btn-sm btn-primary">Edit</a>
-                  <a href="{% url 'delete_task' task_list.id task.id %}" class="btn btn-sm btn-danger">Delete</a>
+                <div class="mt-3 d-flex flex-column flex-sm-row justify-content-sm-end">
+                  <a href="{% url 'update_task' task_list.id task.id %}"
+                     class="btn btn-sm btn-primary mb-2 mb-sm-0 mr-sm-2">Edit</a>
+                  <a href="{% url 'delete_task' task_list.id task.id %}"
+                     class="btn btn-sm btn-danger mb-2 mb-sm-0 mr-sm-2">Delete</a>
                   <form action="{% url 'mark_task_completed' task_list_id=task.task_list.id task_id=task.id %}"
                         method="post" style="display: inline-block;">
                     {% csrf_token %}
                     <button type="submit"
-                            class="btn btn-sm {% if not task.completed %}btn-warning{% else %}btn-success{% endif %}">
+                            class="btn btn-sm {% if not task.completed %}btn-warning{% else %}btn-success{% endif %} mb-2 mb-sm-0">
                       {% if not task.completed %}Mark as Complete{% else %}Completed{% endif %}
                     </button>
                   </form>
