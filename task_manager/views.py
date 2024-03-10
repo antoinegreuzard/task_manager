@@ -181,7 +181,7 @@ class TaskListDetailView(LoginRequiredMixin, DetailView):
             tasks = tasks.filter(completed=True)
         elif completed == 'False':
             tasks = tasks.filter(completed=False)
-        else:
+        elif completed == 'All':
             tasks = self.object.tasks.all()
 
         if sort_order:

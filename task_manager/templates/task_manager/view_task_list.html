@@ -55,21 +55,17 @@
             </div>
 
             <!-- Completion filter -->
-            <div class="col-auto">
-              <select id="completed" name="completed" class="form-control mb-2">
-                <option value=""
-                        {% if request.GET.completed == "" or not request.GET.completed %}selected{% endif %}>
-                  All Tasks
-                </option>
-                <option value="True" {% if request.GET.completed == "True" %}selected{% endif %}>Completed Tasks
-                </option>
-                <option value="False"
-                        {% if request.GET.completed == "False" or not request.GET.completed %}selected{% endif %}>
-                  Incomplete Tasks
-                </option>
-              </select>
-            </div>
-
+            <select id="completed" name="completed" class="form-control mb-2">
+              <option value="All" {% if request.GET.completed == "All" %}selected{% endif %}>
+                All Tasks
+              </option>
+              <option value="True" {% if request.GET.completed == "True" %}selected{% endif %}>Completed Tasks
+              </option>
+              <option value="False"
+                      {% if request.GET.completed == "False" or not request.GET.completed %}selected{% endif %}>
+                Incomplete Tasks
+              </option>
+            </select>
 
             <!-- Priority filter -->
             <div class="col-auto">
