@@ -10,6 +10,7 @@ from django.db.models import Count, Q
 from django.http import HttpResponseRedirect, HttpResponseForbidden
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views import View
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView, FormView
 
@@ -140,7 +141,11 @@ class LoginView(FormView):
             self.request.session.set_expiry(0)
 
         next_url = self.request.GET.get('next', '')
-        if next_url:
+        if next_url and url_has_allowed_host_and_scheme(
+            url=next_url,
+            allowed_hosts={self.request.get_host()},
+            require_https=self.request.is_secure(),
+        ):
             return HttpResponseRedirect(next_url)
         else:
             return super().form_valid(form)
