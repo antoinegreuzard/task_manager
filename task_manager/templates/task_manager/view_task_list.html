@@ -27,8 +27,8 @@
           <div class="form-row align-items-center">
             <!-- User filter -->
             <div class="col-auto">
-              <select id="user_id" name="user_id" class="form-control mb-2">
-                <option value="">User assigned to</option>
+              <select id="user_id" name="user_id" class="form-select mb-2">
+                <option value="">Select a user assigned to:</option>
                 {% for user in users %}
                   <option value="{{ user.id }}"
                           {% if request.GET.user_id == user.id|stringformat:"s" %}selected{% endif %}>
@@ -45,21 +45,24 @@
 
             <!-- Sort filter -->
             <div class="col-auto">
-              <select id="sort" name="sort" class="form-control mb-2">
-                <option value="">Sort by date</option>
-                <option value="deadline" {% if request.GET.sort == "deadline" %}selected{% endif %}>Ascending date
+              <select id="sort" name="sort" class="form-select mb-2">
+                <option value="">Sort by date:</option>
+                <option value="deadline" {% if request.GET.sort == "deadline" %}selected{% endif %}>
+                  Ascending date sorting
                 </option>
-                <option value="-deadline" {% if request.GET.sort == "-deadline" %}selected{% endif %}>Descending date
+                <option value="-deadline" {% if request.GET.sort == "-deadline" %}selected{% endif %}>
+                  Descending date sorting
                 </option>
               </select>
             </div>
 
             <!-- Completion filter -->
-            <select id="completed" name="completed" class="form-control mb-2">
+            <select id="completed" name="completed" class="form-select mb-2">
               <option value="All" {% if request.GET.completed == "All" %}selected{% endif %}>
-                All Tasks
+                Select a tasks status:
               </option>
-              <option value="True" {% if request.GET.completed == "True" %}selected{% endif %}>Completed Tasks
+              <option value="True" {% if request.GET.completed == "True" %}selected{% endif %}>
+                Completed Tasks
               </option>
               <option value="False"
                       {% if request.GET.completed == "False" or not request.GET.completed %}selected{% endif %}>
@@ -69,8 +72,8 @@
 
             <!-- Priority filter -->
             <div class="col-auto">
-              <select id="priority" name="priority" class="form-control mb-2">
-                <option value="">All priorities</option>
+              <select id="priority" name="priority" class="form-select mb-2">
+                <option value="">Select a priority:</option>
                 <option value="High" {% if request.GET.priority == "High" %}selected{% endif %}>High</option>
                 <option value="Medium" {% if request.GET.priority == "Medium" %}selected{% endif %}>Medium</option>
                 <option value="Low" {% if request.GET.priority == "Low" %}selected{% endif %}>Low</option>
