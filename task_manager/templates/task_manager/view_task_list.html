@@ -20,45 +20,49 @@
       </div>
     </div>
     <!-- Filter form -->
-    <div class="row my-4">
+    <div class="row">
       <div class="col">
-        <form method="get" action="{% url 'view_task_list' task_list.id %}" class="form-row align-items-center">
-          <div class="col-md-auto my-1">
-            <select id="user_id" name="user_id" class="form-control">
-              <option value="">User assigned to</option>
-              {% for user in users %}
-                <option value="{{ user.id }}"
-                        {% if request.GET.user_id == user.id|stringformat:"s" %}selected{% endif %}>
-                  {{ user.username }}
-                </option>
-              {% endfor %}
-            </select>
-          </div>
-          <div class="col-md-auto my-1">
-            <input id="date" type="date" name="date" class="form-control" value="{{ request.GET.date }}">
-          </div>
-          <div class="col-md-auto my-1">
-            <select id="sort" name="sort" class="form-control">
-              <option value="">Sort by date</option>
-              <option value="deadline" {% if request.GET.sort == "deadline" %}selected{% endif %}>Ascending date
+        <form method="get" action="{% url 'view_task_list' task_list.id %}" class="form-inline">
+          <!-- Filtre utilisateur assigné -->
+          <select id="user_id" name="user_id" class="form-control mr-2">
+            <option value="">User assigned to</option>
+            {% for user in users %}
+              <option value="{{ user.id }}" {% if request.GET.user_id == user.id|stringformat:"s" %}selected{% endif %}>
+                {{ user.username }}
               </option>
-              <option value="-deadline" {% if request.GET.sort == "-deadline" %}selected{% endif %}>Descending date
-              </option>
-            </select>
-          </div>
-          <div class="col-md-auto my-1">
-            <select id="completed" name="completed" class="form-control">
-              <option value="">All Tasks</option>
-              <option value="True" {% if request.GET.completed == "True" %}selected{% endif %}>Completed Tasks</option>
-              <option value="False" {% if request.GET.completed == "False" %}selected{% endif %}>Incomplete Tasks
-              </option>
-            </select>
-          </div>
-          <div class="col-md-auto my-1 d-flex gap-2">
-            <button type="submit" class="btn btn-primary">Apply</button>
-            <button type="reset" class="btn btn-secondary">Reset</button>
-            <a href="{% url 'view_task_list' task_list.id %}" class="btn btn-info">Clear</a>
-          </div>
+            {% endfor %}
+          </select>
+
+          <!-- Filtre date -->
+          <input id="date" type="date" name="date" class="form-control mr-2" value="{{ request.GET.date }}">
+
+          <!-- Filtre de tri -->
+          <select id="sort" name="sort" class="form-control mr-2">
+            <option value="">Sort by date</option>
+            <option value="deadline" {% if request.GET.sort == "deadline" %}selected{% endif %}>Ascending date</option>
+            <option value="-deadline" {% if request.GET.sort == "-deadline" %}selected{% endif %}>Descending date
+            </option>
+          </select>
+
+          <!-- Filtre tâches complétées -->
+          <select id="completed" name="completed" class="form-control mr-2">
+            <option value="">All Tasks</option>
+            <option value="True" {% if request.GET.completed == "True" %}selected{% endif %}>Completed Tasks</option>
+            <option value="False" {% if request.GET.completed == "False" %}selected{% endif %}>Incomplete Tasks</option>
+          </select>
+
+          <!-- Correction de la faute de frappe ici -->
+          <select id="priority" name="priority" class="form-control mr-2">
+            <option value="">All priorities</option>
+            <option value="High" {% if request.GET.priority == "High" %}selected{% endif %}>High</option>
+            <option value="Medium" {% if request.GET.priority == "Medium" %}selected{% endif %}>Medium</option>
+            <option value="Low" {% if request.GET.priority == "Low" %}selected{% endif %}>Low</option>
+          </select>
+
+          <!-- Boutons de soumission et de réinitialisation -->
+          <button type="submit" class="btn btn-primary mr-1">Apply</button>
+          <button type="reset" class="btn btn-secondary mr-1">Reset</button>
+          <a href="{% url 'view_task_list' task_list.id %}" class="btn btn-info">Clear</a>
         </form>
       </div>
     </div>

@@ -1,17 +1,16 @@
 from django.contrib import messages
 from django.contrib.auth import login, logout, authenticate
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
 from django.db.models import Count, Q
-from django.http import HttpResponseRedirect
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
 from django.urls import reverse_lazy
 from django.views import View
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView
 
-from task_manager.models import TaskList, Task
 from task_manager.forms import TaskListForm, TaskForm, UserRegistrationForm, UserLoginForm
+from task_manager.models import TaskList, Task
 
 
 class CreateTaskListView(LoginRequiredMixin, CreateView):
@@ -126,6 +125,7 @@ class TaskListDetailView(LoginRequiredMixin, DetailView):
         date = self.request.GET.get('date')
         sort_order = self.request.GET.get('sort', 'deadline')
         completed = self.request.GET.get('completed')
+        priority = self.request.GET.get('priority')
 
         if user_id:
             tasks = tasks.filter(assigned_to__id=user_id)
@@ -135,6 +135,8 @@ class TaskListDetailView(LoginRequiredMixin, DetailView):
             tasks = tasks.filter(completed=(completed == 'True'))
         if sort_order:
             tasks = tasks.order_by(sort_order)
+        if priority:
+            tasks = tasks.filter(priority=priority)
 
         context['tasks'] = tasks
         context['users'] = User.objects.all()
