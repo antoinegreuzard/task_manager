@@ -70,9 +70,8 @@ def home(request):
     context = {}
     if request.user.is_authenticated:
         user_tasks = Task.objects.filter(
-            assigned_to=request.user,
-            completed=False,
-            deadline__isnull=False
+            Q(assigned_to=request.user, completed=False, deadline__isnull=False) |
+            Q(task_list__shared_with=request.user, assigned_to=request.user, completed=False, deadline__isnull=False)
         ).select_related('task_list').prefetch_related('assigned_to').order_by('deadline')
 
         tasks_data = []
