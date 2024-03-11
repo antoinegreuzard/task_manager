@@ -210,7 +210,7 @@ def create_task(request, task_list_id):
         return HttpResponseForbidden("You do not have permission to access this task list.")
 
     if request.method == 'POST':
-        form = TaskForm(request.POST)
+        form = TaskForm(request.POST, task_list=task_list)
         if form.is_valid():
             new_task = form.save(commit=False)
             new_task.task_list = task_list
@@ -218,7 +218,7 @@ def create_task(request, task_list_id):
             form.save_m2m()
             return redirect('view_task_list', pk=task_list_id)
     else:
-        form = TaskForm()
+        form = TaskForm(task_list=task_list)
     return render(request, 'task_manager/create_task.html', {'form': form})
 
 
@@ -230,12 +230,12 @@ def update_task(request, task_list_id, task_id):
 
     task = get_object_or_404(Task, pk=task_id, task_list=task_list)
     if request.method == 'POST':
-        form = TaskForm(request.POST, instance=task)
+        form = TaskForm(request.POST, instance=task, task_list=task_list)
         if form.is_valid():
             form.save()
             return redirect('view_task_list', pk=task_list_id)
     else:
-        form = TaskForm(instance=task)
+        form = TaskForm(instance=task, task_list=task_list)
     return render(request, 'task_manager/update_task.html', {'form': form, 'task': task})
 
 

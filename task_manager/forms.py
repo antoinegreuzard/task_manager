@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.models import User
+from django.db.models import Q
 
 from .models import TaskList, Task
 
@@ -42,6 +43,14 @@ class TaskForm(forms.ModelForm):
             'description': forms.Textarea(attrs={'rows': 4}),
             'priority': forms.Select(choices=[('High', 'High'), ('Medium', 'Medium'), ('Low', 'Low')]),
         }
+
+    def __init__(self, *args, **kwargs):
+        task_list = kwargs.pop('task_list', None)  # Retirer 'task_list' de kwargs
+        super(TaskForm, self).__init__(*args, **kwargs)
+        if task_list:
+            self.fields['assigned_to'].queryset = User.objects.filter(
+                Q(id=task_list.created_by.id) | Q(shared_task_lists=task_list)
+            ).distinct()
 
 
 class UserRegistrationForm(UserCreationForm):
