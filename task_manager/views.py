@@ -2,12 +2,10 @@ import json
 
 from django.contrib import messages
 from django.contrib.auth import login, logout, authenticate
-from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
-from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Count, Q
-from django.http import HttpResponseRedirect, HttpResponseForbidden
+from django.http import HttpResponseRedirect
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy
 from django.utils.http import url_has_allowed_host_and_scheme
@@ -66,44 +64,52 @@ class DeleteTaskListView(LoginRequiredMixin, DeleteView):
         return TaskList.objects.filter(created_by=self.request.user)
 
 
-def home(request):
-    context = {}
-    if request.user.is_authenticated:
-        user_tasks = Task.objects.filter(
-            Q(assigned_to=request.user, completed=False, deadline__isnull=False) |
-            Q(task_list__shared_with=request.user, assigned_to=request.user, completed=False, deadline__isnull=False)
-        ).select_related('task_list').prefetch_related('assigned_to').order_by('deadline')
+class HomeView(View):
+    template_name = 'home.html'
 
-        tasks_data = []
-        for task in user_tasks:
-            priority_colors = {
-                'High': '#ff0000',
-                'Medium': '#ffa500',
-                'Low': '#008000',
-            }
-            color = priority_colors.get(task.priority, '#007bff')
+    def get(self, request, *args, **kwargs):
+        context = self.get_context_data(request)
+        return render(request, self.template_name, context)
 
-            assigned_to_name = task.assigned_to.first().username if task.assigned_to.exists() else 'N/A'
-            assigned_to_names = ', '.join(user.username for user in task.assigned_to.all())
+    @staticmethod
+    def get_context_data(request):
+        context = {}
+        if request.user.is_authenticated:
+            user_tasks = Task.objects.filter(
+                Q(assigned_to=request.user, completed=False, deadline__isnull=False) |
+                Q(task_list__shared_with=request.user, assigned_to=request.user, completed=False,
+                  deadline__isnull=False)
+            ).select_related('task_list').prefetch_related('assigned_to').order_by('deadline')
 
-            task_data = {
-                'id': task.id,
-                'title': f"{task.title} ({task.task_list.title} - {assigned_to_name})",
-                'start': task.deadline.strftime("%Y-%m-%dT%H:%M:%S"),
-                'color': color,
-                'extendedProps': {
-                    'title': task.title,
-                    'description': task.description,
-                    'priority': task.priority,
-                    'assignedTo': assigned_to_names,
-                    'completed': task.completed,
-                    'taskListTitle': task.task_list.title,
+            tasks_data = []
+            for task in user_tasks:
+                priority_colors = {
+                    'High': '#ff0000',
+                    'Medium': '#ffa500',
+                    'Low': '#008000',
                 }
-            }
-            tasks_data.append(task_data)
+                color = priority_colors.get(task.priority, '#007bff')
 
-        context['tasks_json'] = json.dumps(tasks_data)
-    return render(request, 'home.html', context)
+                assigned_to_name = ', '.join(user.username for user in task.assigned_to.all())
+
+                task_data = {
+                    'id': task.id,
+                    'title': f"{task.title} ({task.task_list.title} - {assigned_to_name})",
+                    'start': task.deadline.strftime("%Y-%m-%dT%H:%M:%S"),
+                    'color': color,
+                    'extendedProps': {
+                        'title': task.title,
+                        'description': task.description,
+                        'priority': task.priority,
+                        'assignedTo': assigned_to_name,
+                        'completed': task.completed,
+                        'taskListTitle': task.task_list.title,
+                    }
+                }
+                tasks_data.append(task_data)
+
+            context['tasks_json'] = json.dumps(tasks_data)
+        return context
 
 
 class RegisterView(View):
@@ -160,9 +166,11 @@ class LoginView(FormView):
         return super().post(request, *args, **kwargs)
 
 
-def user_logout(request):
-    logout(request)
-    return redirect('home')
+class LogoutView(View):
+    @staticmethod
+    def get(request, *args, **kwargs):
+        logout(request)
+        return redirect('home')
 
 
 class TaskListDetailView(LoginRequiredMixin, DetailView):
@@ -201,85 +209,95 @@ class TaskListDetailView(LoginRequiredMixin, DetailView):
         return context
 
 
-@login_required
-def create_task(request, task_list_id):
-    try:
-        task_list = TaskList.objects.get(Q(pk=task_list_id), Q(created_by=request.user) | Q(shared_with=request.user))
-    except TaskList.DoesNotExist:
-        return HttpResponseForbidden("You do not have permission to access this task list.")
+class CreateTaskView(LoginRequiredMixin, CreateView):
+    model = Task
+    form_class = TaskForm
+    template_name = 'task_manager/create_task.html'
 
-    if request.method == 'POST':
-        form = TaskForm(request.POST, task_list=task_list)
-        if form.is_valid():
-            new_task = form.save(commit=False)
-            new_task.task_list = task_list
-            new_task.save()
-            form.save_m2m()
-            return redirect('view_task_list', pk=task_list_id)
-    else:
-        form = TaskForm(task_list=task_list)
-    return render(request, 'task_manager/create_task.html', {'form': form})
+    def dispatch(self, request, *args, **kwargs):
+        self.task_list = get_object_or_404(TaskList, Q(pk=kwargs['task_list_id']),
+                                           Q(created_by=self.request.user) | Q(shared_with=self.request.user))
 
+        return super().dispatch(request, *args, **kwargs)
 
-@login_required
-def update_task(request, task_list_id, task_id):
-    task_list = get_object_or_404(TaskList, pk=task_list_id)
-    if not (request.user == task_list.created_by or request.user in task_list.shared_with.all()):
-        return HttpResponseForbidden("You do not have permission to update this task.")
+    def form_valid(self, form):
+        form.instance.task_list = self.task_list
+        return super().form_valid(form)
 
-    task = get_object_or_404(Task, pk=task_id, task_list=task_list)
-    if request.method == 'POST':
-        form = TaskForm(request.POST, instance=task, task_list=task_list)
-        if form.is_valid():
-            form.save()
-            return redirect('view_task_list', pk=task_list_id)
-    else:
-        form = TaskForm(instance=task, task_list=task_list)
-    return render(request, 'task_manager/update_task.html', {'form': form, 'task': task})
+    def get_success_url(self):
+        return reverse_lazy('view_task_list', kwargs={'pk': self.task_list.pk})
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({'task_list': self.task_list})
+        return kwargs
 
 
-@login_required
-def delete_task(request, task_list_id, task_id):
-    task_list = get_object_or_404(TaskList, pk=task_list_id)
-    if not (request.user == task_list.created_by or request.user in task_list.shared_with.all()):
-        return HttpResponseForbidden("You do not have permission to delete this task.")
+class UpdateTaskView(LoginRequiredMixin, UpdateView):
+    model = Task
+    form_class = TaskForm
+    template_name = 'task_manager/update_task.html'
 
-    task = get_object_or_404(Task, pk=task_id, task_list=task_list)
-    if request.method == 'POST':
-        task.delete()
-        return redirect('view_task_list', pk=task_list_id)
-    return render(request, 'task_manager/delete_task.html', {'task': task})
+    def dispatch(self, request, *args, **kwargs):
+        self.task_list = get_object_or_404(TaskList, pk=kwargs['task_list_id'])
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_queryset(self):
+        return Task.objects.filter(task_list=self.task_list, task_list__created_by=self.request.user)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({'task_list': self.task_list})
+        return kwargs
+
+    def get_success_url(self):
+        return reverse_lazy('view_task_list', kwargs={'pk': self.task_list.pk})
 
 
-@login_required
-def mark_task_completed(request, task_list_id, task_id):
-    task_list = get_object_or_404(TaskList, pk=task_list_id)
-    if not (request.user == task_list.created_by or request.user in task_list.shared_with.all()):
-        return HttpResponseForbidden("You do not have permission to complete this task.")
+class DeleteTaskView(LoginRequiredMixin, DeleteView):
+    model = Task
+    template_name = 'task_manager/delete_task.html'
 
-    task = get_object_or_404(Task, pk=task_id, task_list=task_list)
-    if request.method == 'POST':
+    def dispatch(self, request, *args, **kwargs):
+        self.task_list_id = kwargs['task_list_id']
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_queryset(self):
+        return Task.objects.filter(task_list__pk=self.task_list_id, task_list__created_by=self.request.user)
+
+    def get_success_url(self):
+        return reverse_lazy('view_task_list', kwargs={'pk': self.task_list_id})
+
+
+class MarkTaskCompletedView(LoginRequiredMixin, View):
+    @staticmethod
+    def post(request, task_list_id, task_id, *args, **kwargs):
+        task = get_object_or_404(Task, pk=task_id, task_list__id=task_list_id, task_list__created_by=request.user)
         task.completed = not task.completed
         task.save()
-    return redirect('view_task_list', pk=task_list_id)
+        return redirect('view_task_list', pk=task_list_id)
 
 
-@login_required
-def share_task_list(request, task_list_id):
-    task_list = get_object_or_404(TaskList, pk=task_list_id, created_by=request.user)
-    if request.method == 'POST':
-        form = ShareTaskListForm(request.POST)
-        if form.is_valid():
-            email = form.cleaned_data['email']
-            try:
-                user_to_share_with = User.objects.get(email=email)
-                task_list.shared_with.add(user_to_share_with)
-                messages.success(request, 'List shared successfully.')
-            except ObjectDoesNotExist:
-                messages.error(request, 'User does not exist.')
-    else:
-        form = ShareTaskListForm()
-    return render(request, 'task_manager/share_task_list.html', {'form': form})
+class ShareTaskListView(LoginRequiredMixin, FormView):
+    form_class = ShareTaskListForm
+    template_name = 'task_manager/share_task_list.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        self.task_list = get_object_or_404(TaskList, pk=kwargs['task_list_id'], created_by=request.user)
+        return super().dispatch(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        email = form.cleaned_data['email']
+        try:
+            user_to_share_with = User.objects.get(email=email)
+            self.task_list.shared_with.add(user_to_share_with)
+            messages.success(self.request, 'List shared successfully.')
+        except User.DoesNotExist:
+            messages.error(self.request, 'User does not exist.')
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse_lazy('view_task_list', kwargs={'pk': self.task_list.pk})
 
 
 def custom_404(request, exception):
