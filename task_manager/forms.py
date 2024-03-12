@@ -20,38 +20,30 @@ class TaskForm(forms.ModelForm):
         widget=forms.TextInput(attrs={'type': 'datetime-local', 'class': 'form-control'}),
         input_formats=['%Y-%m-%dT%H:%M'],
     )
-    title = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control'}))
-    description = forms.CharField(
-        widget=forms.Textarea(
-            attrs={'rows': 4, 'class': 'form-control'},
-        ),
-        required=False,
-    )
-    priority = forms.ChoiceField(
-        choices=[('High', 'High'), ('Medium', 'Medium'), ('Low', 'Low')],
-        widget=forms.Select(attrs={'class': 'form-control'})
-    )
-    assigned_to = forms.ModelMultipleChoiceField(
-        queryset=User.objects.all(),
-        widget=forms.SelectMultiple(attrs={'class': 'form-control'})
-    )
 
     class Meta:
         model = Task
         fields = ['title', 'description', 'deadline', 'priority', 'assigned_to', 'category']
         widgets = {
-            'description': forms.Textarea(attrs={'rows': 4}),
-            'priority': forms.Select(choices=[('High', 'High'), ('Medium', 'Medium'), ('Low', 'Low')]),
+            'title': forms.TextInput(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'rows': 4, 'class': 'form-control'}),
+            'priority': forms.Select(attrs={'class': 'form-control'}),
+            'assigned_to': forms.SelectMultiple(attrs={'class': 'form-control'}),
             'category': forms.Select(attrs={'class': 'form-control'}),
         }
 
     def __init__(self, *args, **kwargs):
-        task_list = kwargs.pop('task_list', None)  # Retirer 'task_list' de kwargs
+        task_list = kwargs.pop('task_list', None)
+        user_categories = kwargs.pop('user_categories', None)
         super(TaskForm, self).__init__(*args, **kwargs)
+
         if task_list:
             self.fields['assigned_to'].queryset = User.objects.filter(
                 Q(id=task_list.created_by.id) | Q(shared_task_lists=task_list)
             ).distinct()
+
+        if user_categories is not None:
+            self.fields['category'].queryset = user_categories
 
 
 class UserRegistrationForm(UserCreationForm):

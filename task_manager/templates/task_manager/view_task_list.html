@@ -129,7 +129,8 @@
                     {% if not forloop.last %}, {% endif %}
                     {% empty %}
                     Not assigned
-                  {% endfor %}
+                  {% endfor %} <br>
+                  <strong>Category:</strong> {{ task.category }}
                 </div>
                 <div class="mt-3 d-flex flex-column flex-sm-row justify-content-sm-end">
                   {% if request.user == task_list.created_by or request.user in task.assigned_to.all or request.user in task_list.shared_with.all %}
