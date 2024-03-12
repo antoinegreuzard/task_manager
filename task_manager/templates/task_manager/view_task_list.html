@@ -84,6 +84,20 @@
               </select>
             </div>
 
+            <!-- Dans votre formulaire de filtrage existant -->
+            <div class="col-auto">
+              <select id="category" name="category" class="form-select mb-2">
+                <option value="">Select a category:</option>
+                {% for category in categories %}
+                  <option value="{{ category.id }}"
+                          {% if request.GET.category == category.id|stringformat:"s" %}selected{% endif %}>
+                    {{ category.name }}
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
+
+
             <!-- Submission buttons -->
             <div class="col-auto">
               <button type="submit" class="btn btn-primary mb-2 mr-1">Apply</button>
