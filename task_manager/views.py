@@ -243,7 +243,10 @@ class UpdateTaskView(LoginRequiredMixin, UpdateView):
         return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
-        return Task.objects.filter(task_list=self.task_list, task_list__created_by=self.request.user)
+        return Task.objects.filter(
+            Q(task_list=self.task_list) & (
+                Q(task_list__created_by=self.request.user) | Q(task_list__shared_with=self.request.user))
+        )
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -271,8 +274,13 @@ class DeleteTaskView(LoginRequiredMixin, DeleteView):
 
 class MarkTaskCompletedView(LoginRequiredMixin, View):
     @staticmethod
-    def post(request, task_list_id, task_id, *args, **kwargs):
-        task = get_object_or_404(Task, pk=task_id, task_list__id=task_list_id, task_list__created_by=request.user)
+    def post(request, task_list_id, pk, *args, **kwargs):
+        task = get_object_or_404(
+            Task,
+            Q(pk=pk),
+            Q(task_list__id=task_list_id) & (
+                Q(task_list__created_by=request.user) | Q(task_list__shared_with=request.user))
+        )
         task.completed = not task.completed
         task.save()
         return redirect('view_task_list', pk=task_list_id)
@@ -283,7 +291,7 @@ class ShareTaskListView(LoginRequiredMixin, FormView):
     template_name = 'task_manager/share_task_list.html'
 
     def dispatch(self, request, *args, **kwargs):
-        self.task_list = get_object_or_404(TaskList, pk=kwargs['task_list_id'], created_by=request.user)
+        self.task_list = get_object_or_404(TaskList, pk=kwargs['pk'], created_by=request.user)
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
