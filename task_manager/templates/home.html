@@ -69,7 +69,7 @@
               description: event.extendedProps.description || 'No description available.',
               deadline: event.start ? event.start.toLocaleString() : 'No deadline',
               priority: event.extendedProps.priority || 'No priority',
-              assignedTo: event.extendedProps.assignedTo || 'No one assigned',
+              category: event.extendedProps.category || 'None',
             };
 
             // Injection des données dans la modal
@@ -78,7 +78,7 @@
               <p><strong>Description:</strong> ${eventData.description}</p>
               <p><strong>Deadline:</strong> ${eventData.deadline}</p>
               <p><strong>Priority:</strong> ${eventData.priority}</p>
-              <p><strong>Assigned to:</strong> ${eventData.assignedTo}</p>
+              <p><strong>Category:</strong> ${eventData.category}</p>
             `;
 
             // Affichage de la modal

@@ -344,6 +344,7 @@ class HomeView(View):
                         'assignedTo': assigned_to_name,
                         'completed': task.completed,
                         'taskListTitle': task.task_list.title,
+                        'category': task.category.name
                     }
                 }
                 tasks_data.append(task_data)
