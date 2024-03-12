@@ -47,14 +47,17 @@ class TaskListView(LoginRequiredMixin, ListView):
     def get_queryset(self):
         user = self.request.user
         category_id = self.request.GET.get('category')
+
         queryset = TaskList.objects.filter(Q(created_by=user) | Q(shared_with=user)).distinct()
+
+        if category_id:
+            queryset = queryset.filter(tasks__category__id=category_id).distinct()
+
         queryset = queryset.annotate(
             total_tasks=Count('tasks'),
             completed_tasks=Count('tasks', filter=Q(tasks__completed=True)),
             not_completed_tasks=Count('tasks', filter=Q(tasks__completed=False)),
         )
-        if category_id:
-            queryset = queryset.filter(category__id=category_id)
         return queryset
 
     def get_context_data(self, **kwargs):
@@ -90,6 +93,7 @@ class TaskListDetailView(TaskMixin, DetailView):
         sort_order = self.request.GET.get('sort', 'deadline')
         completed = self.request.GET.get('completed', 'False')
         priority = self.request.GET.get('priority')
+        category_id = self.request.GET.get('category')
 
         if user_id:
             tasks = tasks.filter(assigned_to__id=user_id)
@@ -101,6 +105,8 @@ class TaskListDetailView(TaskMixin, DetailView):
             tasks = tasks.filter(completed=False)
         elif completed == 'All':
             tasks = self.object.tasks.all()
+        if category_id:
+            tasks = tasks.filter(category__id=category_id)
 
         if priority:
             tasks = tasks.filter(priority=priority)
@@ -108,10 +114,11 @@ class TaskListDetailView(TaskMixin, DetailView):
         if sort_order:
             tasks = tasks.order_by(sort_order)
 
-        tasks = tasks.select_related('task_list').prefetch_related('assigned_to')
+        tasks = tasks.select_related('task_list', 'category').prefetch_related('assigned_to')
 
         context['tasks'] = tasks
         context['users'] = User.objects.all()
+        context['categories'] = Category.objects.filter(created_by=self.request.user)
         return context
 
 
@@ -333,6 +340,7 @@ class DeleteCategoryView(LoginRequiredMixin, DeleteView):
 class CategoryListView(LoginRequiredMixin, ListView):
     model = Category
     template_name = 'task_manager/category_list.html'
+    context_object_name = 'categories'
 
     def get_queryset(self):
         return Category.objects.filter(created_by=self.request.user)

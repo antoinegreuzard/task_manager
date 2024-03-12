@@ -81,6 +81,8 @@ class ShareTaskListForm(forms.Form):
 
 
 class CategoryForm(forms.ModelForm):
+    name = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control'}))
+
     class Meta:
         model = Category
         fields = ['name']
