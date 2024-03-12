@@ -18,4 +18,8 @@ urlpatterns = [
     path('task_list/<int:task_list_id>/delete_task/<int:pk>/', views.DeleteTaskView.as_view(), name='delete_task'),
     path('task_list/<int:task_list_id>/completed/<int:pk>/', views.MarkTaskCompletedView.as_view(),
          name='mark_task_completed'),
+    path('categories/create/', views.CreateCategoryView.as_view(), name='create_category'),
+    path('categories/<int:pk>/update/', views.UpdateCategoryView.as_view(), name='update_category'),
+    path('categories/<int:pk>/delete/', views.DeleteCategoryView.as_view(), name='delete_category'),
+    path('categories/', views.CategoryListView.as_view(), name='category_list'),
 ]

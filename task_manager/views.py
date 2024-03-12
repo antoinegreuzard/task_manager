@@ -12,8 +12,9 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.views import View
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView, FormView
 
-from task_manager.forms import TaskListForm, TaskForm, UserRegistrationForm, UserLoginForm, ShareTaskListForm
-from task_manager.models import TaskList, Task
+from task_manager.forms import TaskListForm, TaskForm, UserRegistrationForm, UserLoginForm, ShareTaskListForm, \
+    CategoryForm
+from task_manager.models import TaskList, Task, Category
 
 
 class TaskMixin(LoginRequiredMixin):
@@ -44,13 +45,22 @@ class TaskListView(LoginRequiredMixin, ListView):
     template_name = 'task_manager/task_lists.html'
 
     def get_queryset(self):
-        return TaskList.objects.filter(
-            Q(created_by=self.request.user) | Q(shared_with=self.request.user)
-        ).distinct().annotate(
+        user = self.request.user
+        category_id = self.request.GET.get('category')
+        queryset = TaskList.objects.filter(Q(created_by=user) | Q(shared_with=user)).distinct()
+        queryset = queryset.annotate(
             total_tasks=Count('tasks'),
             completed_tasks=Count('tasks', filter=Q(tasks__completed=True)),
             not_completed_tasks=Count('tasks', filter=Q(tasks__completed=False)),
         )
+        if category_id:
+            queryset = queryset.filter(category__id=category_id)
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['categories'] = Category.objects.filter(created_by=self.request.user)
+        return context
 
 
 class UpdateTaskListView(TaskMixin, UpdateView):
@@ -288,6 +298,44 @@ class LogoutView(View):
     def get(request, *args, **kwargs):
         logout(request)
         return redirect('home')
+
+
+class CreateCategoryView(LoginRequiredMixin, CreateView):
+    model = Category
+    form_class = CategoryForm
+    template_name = 'task_manager/create_category.html'
+    success_url = reverse_lazy('category_list')
+
+    def form_valid(self, form):
+        form.instance.created_by = self.request.user
+        return super().form_valid(form)
+
+
+class UpdateCategoryView(LoginRequiredMixin, UpdateView):
+    model = Category
+    form_class = CategoryForm
+    template_name = 'task_manager/update_category.html'
+    success_url = reverse_lazy('category_list')
+
+    def get_queryset(self):
+        return Category.objects.filter(created_by=self.request.user)
+
+
+class DeleteCategoryView(LoginRequiredMixin, DeleteView):
+    model = Category
+    template_name = 'task_manager/delete_category.html'
+    success_url = reverse_lazy('category_list')
+
+    def get_queryset(self):
+        return Category.objects.filter(created_by=self.request.user)
+
+
+class CategoryListView(LoginRequiredMixin, ListView):
+    model = Category
+    template_name = 'task_manager/category_list.html'
+
+    def get_queryset(self):
+        return Category.objects.filter(created_by=self.request.user)
 
 
 def custom_404(request, exception):

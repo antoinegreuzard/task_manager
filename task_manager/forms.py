@@ -3,7 +3,7 @@ from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.models import User
 from django.db.models import Q
 
-from .models import TaskList, Task
+from .models import TaskList, Task, Category
 
 
 class TaskListForm(forms.ModelForm):
@@ -38,10 +38,11 @@ class TaskForm(forms.ModelForm):
 
     class Meta:
         model = Task
-        fields = ['title', 'description', 'deadline', 'priority', 'assigned_to']
+        fields = ['title', 'description', 'deadline', 'priority', 'assigned_to', 'category']
         widgets = {
             'description': forms.Textarea(attrs={'rows': 4}),
             'priority': forms.Select(choices=[('High', 'High'), ('Medium', 'Medium'), ('Low', 'Low')]),
+            'category': forms.Select(attrs={'class': 'form-control'}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -77,3 +78,9 @@ class UserLoginForm(AuthenticationForm):
 
 class ShareTaskListForm(forms.Form):
     email = forms.EmailField(widget=forms.EmailInput(attrs={'class': 'form-control'}))
+
+
+class CategoryForm(forms.ModelForm):
+    class Meta:
+        model = Category
+        fields = ['name']

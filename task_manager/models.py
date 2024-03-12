@@ -13,6 +13,14 @@ class TaskList(models.Model):
         return self.title
 
 
+class Category(models.Model):
+    name = models.CharField(max_length=100)
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.name
+
+
 class Task(models.Model):
     title = models.CharField(max_length=200)
     description = models.TextField(blank=True, null=True)
@@ -21,6 +29,7 @@ class Task(models.Model):
     task_list = models.ForeignKey(TaskList, on_delete=models.CASCADE, related_name='tasks')
     assigned_to = models.ManyToManyField(User, related_name='assigned_tasks')
     completed = models.BooleanField(default=False)
+    category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True, related_name='tasks')
 
     def __str__(self):
         return self.title

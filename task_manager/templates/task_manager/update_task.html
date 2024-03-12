@@ -13,5 +13,8 @@
       {{ form.as_p }}
       <button type="submit" class="btn btn-primary">Update</button>
     </form>
+    <small class="text-muted">
+      <a href="{% url 'category_list' %}">Gérer les catégories</a>
+    </small>
   </div>
 {% endblock %}
