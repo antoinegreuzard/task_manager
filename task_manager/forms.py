@@ -20,6 +20,10 @@ class TaskForm(forms.ModelForm):
         widget=forms.TextInput(attrs={'type': 'datetime-local', 'class': 'form-control'}),
         input_formats=['%Y-%m-%dT%H:%M'],
     )
+    priority = forms.ChoiceField(
+        choices=[('High', 'High'), ('Medium', 'Medium'), ('Low', 'Low')],
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
 
     class Meta:
         model = Task
@@ -27,7 +31,6 @@ class TaskForm(forms.ModelForm):
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-control'}),
             'description': forms.Textarea(attrs={'rows': 4, 'class': 'form-control'}),
-            'priority': forms.Select(attrs={'class': 'form-control'}),
             'assigned_to': forms.SelectMultiple(attrs={'class': 'form-control'}),
             'category': forms.Select(attrs={'class': 'form-control'}),
         }
