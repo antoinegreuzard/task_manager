@@ -12,6 +12,7 @@
     <form method="post" class="mt-3">
       {% csrf_token %}
       <button type="submit" class="btn btn-danger">Delete</button>
+      <a href="{% url 'view_task_list' task_list.id %}" class="btn btn-secondary">Cancel</a>
     </form>
   </div>
 {% endblock %}

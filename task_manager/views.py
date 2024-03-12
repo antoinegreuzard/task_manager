@@ -17,6 +17,16 @@ from task_manager.forms import TaskListForm, TaskForm, UserRegistrationForm, Use
 from task_manager.models import TaskList, Task, Category
 
 
+class TaskMixin(LoginRequiredMixin):
+
+    def get_task_list(self, task_list_id):
+        return get_object_or_404(
+            TaskList,
+            Q(pk=task_list_id),
+            Q(created_by=self.request.user) | Q(shared_with=self.request.user)
+        )
+
+
 class CreateTaskListView(LoginRequiredMixin, CreateView):
     model = TaskList
     form_class = TaskListForm
@@ -53,24 +63,132 @@ class TaskListView(LoginRequiredMixin, ListView):
         return context
 
 
-class UpdateTaskListView(LoginRequiredMixin, UpdateView):
+class UpdateTaskListView(TaskMixin, UpdateView):
     model = TaskList
     form_class = TaskListForm
     template_name = 'task_manager/update_task_list.html'
     success_url = reverse_lazy('task_lists')
 
-    def get_queryset(self):
-        user = self.request.user
-        return TaskList.objects.filter(Q(created_by=user) | Q(shared_with=user)).distinct()
 
-
-class DeleteTaskListView(LoginRequiredMixin, DeleteView):
+class DeleteTaskListView(TaskMixin, DeleteView):
     model = TaskList
     template_name = 'task_manager/delete_task_list.html'
     success_url = reverse_lazy('task_lists')
 
+
+class TaskListDetailView(TaskMixin, DetailView):
+    model = TaskList
+    context_object_name = 'task_list'
+    template_name = 'task_manager/view_task_list.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        tasks = self.object.tasks.all()
+
+        user_id = self.request.GET.get('user_id')
+        date = self.request.GET.get('date')
+        sort_order = self.request.GET.get('sort', 'deadline')
+        completed = self.request.GET.get('completed', 'False')
+        priority = self.request.GET.get('priority')
+
+        if user_id:
+            tasks = tasks.filter(assigned_to__id=user_id)
+        if date:
+            tasks = tasks.filter(deadline__date=date)
+        if completed == 'True':
+            tasks = tasks.filter(completed=True)
+        elif completed == 'False':
+            tasks = tasks.filter(completed=False)
+        elif completed == 'All':
+            tasks = self.object.tasks.all()
+
+        if priority:
+            tasks = tasks.filter(priority=priority)
+
+        if sort_order:
+            tasks = tasks.order_by(sort_order)
+
+        tasks = tasks.select_related('task_list').prefetch_related('assigned_to')
+
+        context['tasks'] = tasks
+        context['users'] = User.objects.all()
+        return context
+
+
+class CreateTaskView(TaskMixin, CreateView):
+    model = Task
+    form_class = TaskForm
+    template_name = 'task_manager/create_task.html'
+
+    def form_valid(self, form):
+        self.task_list = self.get_task_list(self.kwargs['task_list_id'])
+        form.instance.task_list = self.task_list
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse_lazy('view_task_list', kwargs={'pk': self.task_list.pk})
+
+
+class UpdateTaskView(TaskMixin, UpdateView):
+    model = Task
+    form_class = TaskForm
+    template_name = 'task_manager/update_task.html'
+
     def get_queryset(self):
-        return TaskList.objects.filter(created_by=self.request.user)
+        self.task_list = self.get_task_list(self.kwargs['task_list_id'])
+        return Task.objects.filter(task_list=self.task_list)
+
+    def get_success_url(self):
+        return reverse_lazy('view_task_list', kwargs={'pk': self.task_list.pk})
+
+
+class DeleteTaskView(TaskMixin, DeleteView):
+    model = Task
+    template_name = 'task_manager/delete_task.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        self.task_list_id = kwargs['task_list_id']
+        self.task_list = self.get_task_list(self.task_list_id)
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_queryset(self):
+        return Task.objects.filter(task_list=self.task_list)
+
+    def get_success_url(self):
+        return reverse_lazy('view_task_list', kwargs={'pk': self.task_list.pk})
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['task_list'] = self.task_list
+        return context
+
+
+class MarkTaskCompletedView(TaskMixin, View):
+    def post(self, request, task_list_id, pk, *args, **kwargs):
+        self.task_list = self.get_task_list(task_list_id)
+        task = get_object_or_404(Task, pk=pk, task_list=self.task_list)
+        task.completed = not task.completed
+        task.save()
+        return redirect('view_task_list', pk=task_list_id)
+
+
+class ShareTaskListView(TaskMixin, FormView):
+    form_class = ShareTaskListForm
+    template_name = 'task_manager/share_task_list.html'
+
+    def form_valid(self, form):
+        self.task_list = self.get_task_list(self.kwargs['pk'])
+        email = form.cleaned_data['email']
+        try:
+            user_to_share_with = User.objects.get(email=email)
+            self.task_list.shared_with.add(user_to_share_with)
+            messages.success(self.request, 'List shared successfully.')
+        except User.DoesNotExist:
+            messages.error(self.request, 'User does not exist.')
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse_lazy('view_task_list', kwargs={'pk': self.task_list.pk})
 
 
 class HomeView(View):
@@ -180,133 +298,6 @@ class LogoutView(View):
     def get(request, *args, **kwargs):
         logout(request)
         return redirect('home')
-
-
-class TaskListDetailView(LoginRequiredMixin, DetailView):
-    model = TaskList
-    context_object_name = 'task_list'
-    template_name = 'task_manager/view_task_list.html'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        tasks = self.object.tasks.all()
-
-        user_id = self.request.GET.get('user_id')
-        date = self.request.GET.get('date')
-        sort_order = self.request.GET.get('sort', 'deadline')
-        completed = self.request.GET.get('completed', 'False')
-        priority = self.request.GET.get('priority')
-
-        if user_id:
-            tasks = tasks.filter(assigned_to__id=user_id)
-        if date:
-            tasks = tasks.filter(deadline__date=date)
-        if completed == 'True':
-            tasks = tasks.filter(completed=True)
-        elif completed == 'False':
-            tasks = tasks.filter(completed=False)
-        elif completed == 'All':
-            tasks = self.object.tasks.all()
-
-        if sort_order:
-            tasks = tasks.order_by(sort_order)
-        if priority:
-            tasks = tasks.filter(priority=priority)
-
-        context['tasks'] = tasks
-        context['users'] = User.objects.all()
-        return context
-
-
-class CreateTaskView(LoginRequiredMixin, CreateView):
-    model = Task
-    form_class = TaskForm
-    template_name = 'task_manager/create_task.html'
-
-    def dispatch(self, request, *args, **kwargs):
-        self.task_list = get_object_or_404(TaskList, Q(pk=kwargs['task_list_id']),
-                                           Q(created_by=self.request.user) | Q(shared_with=self.request.user))
-
-        return super().dispatch(request, *args, **kwargs)
-
-    def form_valid(self, form):
-        form.instance.task_list = self.task_list
-        return super().form_valid(form)
-
-    def get_success_url(self):
-        return reverse_lazy('view_task_list', kwargs={'pk': self.task_list.pk})
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs.update({'task_list': self.task_list})
-        return kwargs
-
-
-class UpdateTaskView(LoginRequiredMixin, UpdateView):
-    model = Task
-    form_class = TaskForm
-    template_name = 'task_manager/update_task.html'
-
-    def dispatch(self, request, *args, **kwargs):
-        self.task_list = get_object_or_404(TaskList, pk=kwargs['task_list_id'])
-        return super().dispatch(request, *args, **kwargs)
-
-    def get_queryset(self):
-        return Task.objects.filter(task_list=self.task_list, task_list__created_by=self.request.user)
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs.update({'task_list': self.task_list})
-        return kwargs
-
-    def get_success_url(self):
-        return reverse_lazy('view_task_list', kwargs={'pk': self.task_list.pk})
-
-
-class DeleteTaskView(LoginRequiredMixin, DeleteView):
-    model = Task
-    template_name = 'task_manager/delete_task.html'
-
-    def dispatch(self, request, *args, **kwargs):
-        self.task_list_id = kwargs['task_list_id']
-        return super().dispatch(request, *args, **kwargs)
-
-    def get_queryset(self):
-        return Task.objects.filter(task_list__pk=self.task_list_id, task_list__created_by=self.request.user)
-
-    def get_success_url(self):
-        return reverse_lazy('view_task_list', kwargs={'pk': self.task_list_id})
-
-
-class MarkTaskCompletedView(LoginRequiredMixin, View):
-    @staticmethod
-    def post(request, task_list_id, task_id, *args, **kwargs):
-        task = get_object_or_404(Task, pk=task_id, task_list__id=task_list_id, task_list__created_by=request.user)
-        task.completed = not task.completed
-        task.save()
-        return redirect('view_task_list', pk=task_list_id)
-
-
-class ShareTaskListView(LoginRequiredMixin, FormView):
-    form_class = ShareTaskListForm
-    template_name = 'task_manager/share_task_list.html'
-
-    def dispatch(self, request, *args, **kwargs):
-        self.task_list = get_object_or_404(TaskList, pk=kwargs['task_list_id'], created_by=request.user)
-        return super().dispatch(request, *args, **kwargs)
-
-    def form_valid(self, form):
-        email = form.cleaned_data['email']
-        try:
-            user_to_share_with = User.objects.get(email=email)
-            self.task_list.shared_with.add(user_to_share_with)
-            messages.success(self.request, 'List shared successfully.')
-        except User.DoesNotExist:
-            messages.error(self.request, 'User does not exist.')
-        return super().form_valid(form)
-
-    def get_success_url(self):
-        return reverse_lazy('view_task_list', kwargs={'pk': self.task_list.pk})
 
 
 class CreateCategoryView(LoginRequiredMixin, CreateView):
