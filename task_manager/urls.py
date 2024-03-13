@@ -1,6 +1,8 @@
+from django.contrib.sitemaps.views import sitemap
 from django.urls import path
 
 from task_manager import views
+from task_manager.sitemaps import StaticViewSitemap
 
 urlpatterns = [
     path('task_lists/', views.TaskListView.as_view(), name='task_lists'),
@@ -22,4 +24,13 @@ urlpatterns = [
     path('categories/<int:pk>/update/', views.UpdateCategoryView.as_view(), name='update_category'),
     path('categories/<int:pk>/delete/', views.DeleteCategoryView.as_view(), name='delete_category'),
     path('categories/', views.CategoryListView.as_view(), name='category_list'),
+]
+
+sitemaps = {
+    'static': StaticViewSitemap,
+}
+
+urlpatterns += [
+    path('sitemap.xml', sitemap, {'sitemaps': sitemaps},
+         name='django.contrib.sitemaps.views.sitemap')
 ]
