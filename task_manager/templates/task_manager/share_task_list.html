@@ -13,6 +13,7 @@
         {{ form.email }}
       </div>
       <button type="submit" class="btn btn-primary">Share</button>
+      <a href="{% url 'view_task_list' task_list_id %}" class="btn btn-secondary">Cancel</a>
     </form>
   </div>
 {% endblock %}

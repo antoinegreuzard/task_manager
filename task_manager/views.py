@@ -209,6 +209,11 @@ class ShareTaskListView(TaskListAccessMixin, FormView):
     form_class = ShareTaskListForm
     template_name = 'task_manager/share_task_list.html'
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['task_list_id'] = self.kwargs.get('pk')
+        return context
+
     def form_valid(self, form):
         email = form.cleaned_data['email']
         try:
