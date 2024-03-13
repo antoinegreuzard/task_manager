@@ -1,0 +1,15 @@
+on: [push]
+
+jobs:
+  soos_sbom_analysis_example:
+    name: SOOS SBOM Analysis Example
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: Run SOOS SBOM Analysis
+        uses: soos-io/soos-sbom-github-action@v1 # GET Latest Version from https://github.com/marketplace/actions/soos-sbom
+        with:
+          client_id: ${{ secrets.SOOS_CLIENT_ID }}
+          api_key: ${{ secrets.SOOS_API_KEY }}
+          project_name: "task_manager"
+          sbom_path: "SBOM path relative to the repository or empty if it's on the root"
