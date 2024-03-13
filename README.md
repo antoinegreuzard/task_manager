@@ -1,4 +1,4 @@
-# Your Django Project Title
+# Task manager
 
 A brief description of your Django project.
 
