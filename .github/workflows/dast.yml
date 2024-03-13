@@ -10,6 +10,6 @@ jobs:
         with:
           client_id: ${{ secrets.SOOS_CLIENT_ID }}
           api_key: ${{ secrets.SOOS_API_KEY }}
-          project_name: "DAST-GitHub-Action-Test"
+          project_name: "task_manager"
           scan_mode: "baseline"
           target_url: "https://task-manager-ygmd.onrender.com/"
