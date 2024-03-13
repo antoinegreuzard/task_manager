@@ -12,6 +12,7 @@
       {% csrf_token %}
       {{ form.as_p }}
       <button type="submit" class="btn btn-primary">Update</button>
+      <a href="{% url 'view_task_list' task_list.id %}" class="btn btn-secondary">Cancel</a>
     </form>
     <small class="text-muted">
       <a href="{% url 'category_list' %}">Gérer les catégories</a>

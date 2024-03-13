@@ -157,6 +157,11 @@ class CreateTaskView(TaskFormMixin, CreateView):
     def get_success_url(self):
         return reverse_lazy('view_task_list', kwargs={'pk': self.task_list.pk})
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['task_list'] = self.task_list
+        return context
+
 
 class UpdateTaskView(TaskListAccessMixin, UpdateView):
     model = Task
@@ -168,6 +173,11 @@ class UpdateTaskView(TaskListAccessMixin, UpdateView):
 
     def get_success_url(self):
         return reverse_lazy('view_task_list', kwargs={'pk': self.task_list.pk})
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['task_list'] = self.task_list
+        return context
 
 
 class DeleteTaskView(TaskListAccessMixin, DeleteView):
