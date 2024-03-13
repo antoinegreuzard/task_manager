@@ -7,7 +7,6 @@ class StaticViewSitemap(Sitemap):
     changefreq = 'daily'
 
     def items(self):
-        # Liste des noms de vue que vous souhaitez inclure dans le sitemap
         return ['home', 'task_lists', 'create_task_list', 'register', 'login', 'logout', 'create_category',
                 'category_list']
 
