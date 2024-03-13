@@ -1,7 +1,5 @@
 # Task manager
 
-A brief description of your Django project.
-
 ## Setting Up Your Development Environment
 
 To set up your development environment, follow these steps:
