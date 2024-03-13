@@ -163,23 +163,6 @@ class UpdateTaskView(TaskListAccessMixin, UpdateView):
     form_class = TaskForm
     template_name = 'task_manager/update_task.html'
 
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-
-        user_category_ids = Category.objects.filter(created_by=self.request.user).values_list('id', flat=True)
-
-        task_list_category_ids = Category.objects.filter(tasks__task_list=self.task_list).values_list('id', flat=True)
-
-        all_category_ids = set(user_category_ids) | set(task_list_category_ids)
-
-        all_categories = Category.objects.filter(id__in=all_category_ids)
-
-        kwargs.update({
-            'user_categories': all_categories,
-            'task_list': self.task_list
-        })
-        return kwargs
-
     def get_queryset(self):
         return Task.objects.filter(task_list=self.task_list)
 
