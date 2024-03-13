@@ -17,9 +17,14 @@ from task_manager.forms import TaskListForm, TaskForm, UserRegistrationForm, Use
 from task_manager.models import TaskList, Task, Category
 
 
-class TaskMixin(LoginRequiredMixin):
+class TaskListAccessMixin(LoginRequiredMixin):
 
-    def get_task_list(self, task_list_id):
+    def dispatch(self, request, *args, **kwargs):
+        self.task_list = self.get_task_list()
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_task_list(self):
+        task_list_id = self.kwargs.get('task_list_id') or self.kwargs.get('pk')
         return get_object_or_404(
             TaskList,
             Q(pk=task_list_id),
@@ -27,7 +32,22 @@ class TaskMixin(LoginRequiredMixin):
         )
 
 
-class CreateTaskListView(LoginRequiredMixin, CreateView):
+class TaskFormMixin(TaskListAccessMixin):
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        task_list = self.get_task_list()
+        user_category_ids = Category.objects.filter(created_by=self.request.user).values_list('id', flat=True)
+        task_list_category_ids = Category.objects.filter(tasks__task_list=task_list).values_list('id', flat=True)
+        all_category_ids = set(user_category_ids) | set(task_list_category_ids)
+        all_categories = Category.objects.filter(id__in=all_category_ids)
+        kwargs.update({
+            'user_categories': all_categories,
+            'task_list': task_list
+        })
+        return kwargs
+
+
+class CreateTaskListView(TaskList, CreateView):
     model = TaskList
     form_class = TaskListForm
     template_name = 'task_manager/create_task_list.html'
@@ -45,62 +65,36 @@ class TaskListView(LoginRequiredMixin, ListView):
     template_name = 'task_manager/task_lists.html'
 
     def get_queryset(self):
-        user = self.request.user
-        category_id = self.request.GET.get('category')
-
-        queryset = TaskList.objects.filter(Q(created_by=user) | Q(shared_with=user)).distinct()
-
-        if category_id:
-            queryset = queryset.filter(tasks__category__id=category_id).distinct()
-
-        queryset = queryset.annotate(
-            total_tasks=Count('tasks'),
-            completed_tasks=Count('tasks', filter=Q(tasks__completed=True)),
-            not_completed_tasks=Count('tasks', filter=Q(tasks__completed=False)),
-        )
-        return queryset
+        return TaskList.objects.filter(
+            Q(created_by=self.request.user) | Q(shared_with=self.request.user)
+        ).distinct()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        user = self.request.user
-        category_id = self.request.GET.get('category')
-
-        # Catégories créées par l'utilisateur
-        user_category_ids = Category.objects.filter(created_by=user).values_list('id', flat=True)
-
-        # Catégories des tâches dans les listes de tâches partagées
-        shared_task_list_ids = TaskList.objects.filter(shared_with=user).values_list('id', flat=True)
-        shared_task_list_category_ids = Category.objects.filter(
-            tasks__task_list__id__in=shared_task_list_ids).values_list('id', flat=True)
-
-        # Fusion des IDs et récupération des catégories correspondantes sans duplication
-        all_category_ids = set(user_category_ids) | set(shared_task_list_category_ids)
-        all_categories = Category.objects.filter(id__in=all_category_ids)
-
-        # Filtre supplémentaire si category_id est spécifié
-        if category_id:
-            all_categories = all_categories.filter(id=category_id)
-
-        context['categories'] = all_categories
-
-        # Reste de votre logique...
+        context['categories'] = self.get_user_related_categories()
         return context
 
+    def get_user_related_categories(self):
+        user = self.request.user
+        user_categories = Category.objects.filter(created_by=user)
+        shared_categories = Category.objects.filter(tasks__task_list__shared_with=user).distinct()
+        return user_categories.union(shared_categories)
 
-class UpdateTaskListView(TaskMixin, UpdateView):
+
+class UpdateTaskListView(TaskListAccessMixin, UpdateView):
     model = TaskList
     form_class = TaskListForm
     template_name = 'task_manager/update_task_list.html'
     success_url = reverse_lazy('task_lists')
 
 
-class DeleteTaskListView(TaskMixin, DeleteView):
+class DeleteTaskListView(TaskListAccessMixin, DeleteView):
     model = TaskList
     template_name = 'task_manager/delete_task_list.html'
     success_url = reverse_lazy('task_lists')
 
 
-class TaskListDetailView(TaskMixin, DetailView):
+class TaskListDetailView(TaskListAccessMixin, DetailView):
     model = TaskList
     context_object_name = 'task_list'
     template_name = 'task_manager/view_task_list.html'
@@ -109,13 +103,10 @@ class TaskListDetailView(TaskMixin, DetailView):
         context = super().get_context_data(**kwargs)
         tasks = self.object.tasks.all()
 
-        # Récupère les IDs des catégories créées par l'utilisateur
         user_categories_ids = set(Category.objects.filter(created_by=self.request.user).values_list('id', flat=True))
 
-        # Récupère les IDs des catégories utilisées dans les tâches de la liste actuelle
         task_categories_ids = set(Category.objects.filter(tasks__in=tasks).values_list('id', flat=True))
 
-        # Combinaison des IDs des deux ensembles et récupération des catégories correspondantes
         combined_category_ids = user_categories_ids.union(task_categories_ids)
         combined_categories = Category.objects.filter(id__in=combined_category_ids)
 
@@ -153,46 +144,27 @@ class TaskListDetailView(TaskMixin, DetailView):
         return context
 
 
-class CreateTaskView(TaskMixin, CreateView):
+class CreateTaskView(TaskFormMixin, CreateView):
     model = Task
     form_class = TaskForm
     template_name = 'task_manager/create_task.html'
 
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        self.task_list = self.get_task_list(self.kwargs['task_list_id'])
-
-        user_category_ids = Category.objects.filter(created_by=self.request.user).values_list('id', flat=True)
-
-        task_list_category_ids = Category.objects.filter(tasks__task_list=self.task_list).values_list('id', flat=True)
-
-        all_category_ids = set(user_category_ids) | set(task_list_category_ids)
-
-        all_categories = Category.objects.filter(id__in=all_category_ids)
-
-        kwargs.update({
-            'user_categories': all_categories,
-            'task_list': self.task_list
-        })
-        return kwargs
-
     def form_valid(self, form):
-        self.task_list = self.get_task_list(self.kwargs['task_list_id'])
         form.instance.task_list = self.task_list
+        messages.success(self.request, 'Task created successfully.')
         return super().form_valid(form)
 
     def get_success_url(self):
         return reverse_lazy('view_task_list', kwargs={'pk': self.task_list.pk})
 
 
-class UpdateTaskView(TaskMixin, UpdateView):
+class UpdateTaskView(TaskListAccessMixin, UpdateView):
     model = Task
     form_class = TaskForm
     template_name = 'task_manager/update_task.html'
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        self.task_list = self.get_task_list(self.kwargs['task_list_id'])
 
         user_category_ids = Category.objects.filter(created_by=self.request.user).values_list('id', flat=True)
 
@@ -209,21 +181,15 @@ class UpdateTaskView(TaskMixin, UpdateView):
         return kwargs
 
     def get_queryset(self):
-        self.task_list = self.get_task_list(self.kwargs['task_list_id'])
         return Task.objects.filter(task_list=self.task_list)
 
     def get_success_url(self):
         return reverse_lazy('view_task_list', kwargs={'pk': self.task_list.pk})
 
 
-class DeleteTaskView(TaskMixin, DeleteView):
+class DeleteTaskView(TaskListAccessMixin, DeleteView):
     model = Task
     template_name = 'task_manager/delete_task.html'
-
-    def dispatch(self, request, *args, **kwargs):
-        self.task_list_id = kwargs['task_list_id']
-        self.task_list = self.get_task_list(self.task_list_id)
-        return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
         return Task.objects.filter(task_list=self.task_list)
@@ -237,21 +203,20 @@ class DeleteTaskView(TaskMixin, DeleteView):
         return context
 
 
-class MarkTaskCompletedView(TaskMixin, View):
+class MarkTaskCompletedView(TaskListAccessMixin, View):
     def post(self, request, task_list_id, pk, *args, **kwargs):
-        self.task_list = self.get_task_list(task_list_id)
         task = get_object_or_404(Task, pk=pk, task_list=self.task_list)
         task.completed = not task.completed
         task.save()
+        messages.success(request, 'Task status updated successfully.')
         return redirect('view_task_list', pk=task_list_id)
 
 
-class ShareTaskListView(TaskMixin, FormView):
+class ShareTaskListView(TaskListAccessMixin, FormView):
     form_class = ShareTaskListForm
     template_name = 'task_manager/share_task_list.html'
 
     def form_valid(self, form):
-        self.task_list = self.get_task_list(self.kwargs['pk'])
         email = form.cleaned_data['email']
         try:
             user_to_share_with = User.objects.get(email=email)
@@ -273,6 +238,7 @@ class CreateCategoryView(LoginRequiredMixin, CreateView):
 
     def form_valid(self, form):
         form.instance.created_by = self.request.user
+        messages.success(self.request, 'Category created successfully.')
         return super().form_valid(form)
 
 
