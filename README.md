@@ -70,15 +70,12 @@ The server should be running, and you can access your project at `http://127.0.0
 ## Features
 
 - Task filtering by status, priority, or deadline.
-- Task status tracking (e.g., New, In Progress, Completed).
+- Task status tracking.
 - Pagination for task lists.
-- Task search functionality.
 - User authentication and permissions management.
 - Unit testing for models, forms, and views.
 - REST API for integration with other services or frontend applications.
-- Enhanced UI with CSS frameworks like Bootstrap or Tailwind CSS.
-- Notifications for approaching deadlines or task status updates.
-- Detailed documentation for the API and the codebase.
+- Enhanced UI with CSS frameworks like Bootstrap.
 
 ## Testing
 
