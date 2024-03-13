@@ -1,35 +1,8 @@
-from django.test import TestCase, Client
-from django.urls import reverse
-from django.utils import timezone
+from django.test import Client
 from django.contrib.auth.models import User
-from task_manager.models import TaskList, Task, Category
-
-
-class CommonSetUp(TestCase):
-    def setUp(self):
-        self.user = User.objects.create_user(username='testuser', password='12345')
-        self.other_user = User.objects.create_user(username='otheruser', email='otheruser@example.com',
-                                                   password='67890')
-        self.task_list = TaskList.objects.create(title="Test List", created_by=self.user)
-
-
-class TaskListAndTaskModelTest(CommonSetUp):
-    def test_task_list_creation(self):
-        self.assertTrue(isinstance(self.task_list, TaskList))
-        self.assertEqual(str(self.task_list), "Test List")
-
-    def test_task_creation(self):
-        task = Task.objects.create(
-            title="Test Task",
-            description="Test Description",
-            deadline=timezone.now() + timezone.timedelta(days=1),
-            priority="Medium",
-            task_list=self.task_list
-        )
-        task.assigned_to.add(self.user)
-        self.assertTrue(isinstance(task, Task))
-        self.assertEqual(str(task), "Test Task")
-        self.assertFalse(task.is_overdue())
+from django.urls import reverse
+from .common_setup import CommonSetUp
+from task_manager.models import Category, TaskList
 
 
 class ViewTestCase(CommonSetUp):
@@ -49,7 +22,7 @@ class ViewTestCase(CommonSetUp):
         self.assertContains(response, "New List")
 
 
-class UserAuthenticationTestCase(TestCase):
+class UserAuthenticationTestCase(CommonSetUp):
     def test_user_registration(self):
         response = self.client.post(reverse('register'), {
             'username': 'newuser',
@@ -61,7 +34,6 @@ class UserAuthenticationTestCase(TestCase):
         self.assertTrue(User.objects.filter(username='newuser').exists())
 
     def test_user_login_and_logout(self):
-        user = User.objects.create_user(username='testuser', email='testuser@example.com', password='12345')
         response = self.client.post(reverse('login'), {
             'username': 'testuser',
             'password': '12345',
