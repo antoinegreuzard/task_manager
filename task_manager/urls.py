@@ -1,4 +1,5 @@
 from django.contrib.sitemaps.views import sitemap
+from django.http import HttpResponse
 from django.urls import path
 
 from task_manager import views
@@ -33,4 +34,20 @@ sitemaps = {
 urlpatterns += [
     path('sitemap.xml', sitemap, {'sitemaps': sitemaps},
          name='django.contrib.sitemaps.views.sitemap')
+]
+
+
+def robots_txt(request):
+    lines = [
+        "User-Agent: *",
+        "Disallow: /admin/",
+        "Disallow: /accounts/",
+        "Allow: /",
+        "Sitemap: https://task-manager-ygmd.onrender.com/sitemap.xml"
+    ]
+    return HttpResponse("\n".join(lines), content_type="text/plain")
+
+
+urlpatterns += [
+    path("robots.txt", robots_txt),
 ]
