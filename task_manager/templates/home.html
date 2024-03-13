@@ -35,7 +35,6 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
-          <!-- Les détails de la tâche seront injectés ici -->
         </div>
       </div>
     </div>
@@ -72,7 +71,6 @@
               category: event.extendedProps.category || 'None',
             };
 
-            // Injection des données dans la modal
             document.getElementById('taskDetailsModalLabel').textContent = eventData.title;
             document.querySelector('#taskDetailsModal .modal-body').innerHTML = `
               <p><strong>Description:</strong> ${eventData.description}</p>
