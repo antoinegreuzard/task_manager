@@ -35,8 +35,9 @@ jobs:
           pip install -r requirements.txt
       - name: Configure Django for SQLite
         run: |
-          sed -i "s/'ENGINE': 'django.db.backends.postgresql'/'ENGINE': 'django.db.backends.sqlite3'/g" your_project/settings.py
-          sed -i "s/'NAME': os.getenv('DB_NAME')/'NAME': ':memory:'/g" your_project/settings.py
+          sed -i "s/'ENGINE': 'django.db.backends.postgresql'/'ENGINE': 'django.db.backends.sqlite3'/g" gestionnaire_taches_project/settings.py
+          sed -i "s/'NAME': os.getenv('DB_NAME')/'NAME': ':memory:'/g" gestionnaire_taches_project/settings.py
+        shell: /usr/bin/bash -e {0}
       - name: Run migrations
         run: python manage.py migrate
       - name: Run tests
