@@ -30,6 +30,10 @@ SECRET_KEY = os.getenv('SECRET_KEY', get_random_secret_key())
 DEBUG = os.getenv('DEBUG') == 'True'
 
 ALLOWED_HOSTS = ['127.0.0.1', 'taskmanager-production-8789.up.railway.app']
+CSRF_TRUSTED_ORIGINS = ['127.0.0.1', 'taskmanager-production-8789.up.railway.app']
+CSRF_COOKIE_SECURE = True  # Use True if serving over HTTPS
+CSRF_COOKIE_HTTPONLY = True
+CSRF_COOKIE_SAMESITE = 'Lax'  # or 'Strict' depending on your needs
 
 # Application definition
 
