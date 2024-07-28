@@ -29,7 +29,7 @@ SECRET_KEY = os.getenv('SECRET_KEY', get_random_secret_key())
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG') == 'True'
 
-ALLOWED_HOSTS = ['127.0.0.1', 'task-manager-ygmd.onrender.com']
+ALLOWED_HOSTS = ['127.0.0.1', 'taskmanager-production-8789.up.railway.app']
 
 # Application definition
 
